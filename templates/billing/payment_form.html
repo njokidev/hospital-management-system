@@ -8,9 +8,9 @@
         <div class="card-body">
             <div class="alert alert-info">
                 <div class="row text-center">
-                    <div class="col-4"><strong>Total:</strong><br>{{ invoice.net_amount|floatformat:2 }}</div>
-                    <div class="col-4"><strong>Paid:</strong><br>{{ invoice.paid_amount|floatformat:2 }}</div>
-                    <div class="col-4 text-danger"><strong>Due:</strong><br><strong>{{ invoice.due_amount|floatformat:2 }}</strong></div>
+                    <div class="col-4"><strong>Total:</strong><br>{{ invoice.net_amount|ksh }}</div>
+                    <div class="col-4"><strong>Paid:</strong><br>{{ invoice.paid_amount|ksh }}</div>
+                    <div class="col-4 text-danger"><strong>Due:</strong><br><strong>{{ invoice.due_amount|ksh }}</strong></div>
                 </div>
             </div>
             <form method="post" novalidate>{% csrf_token %}{% crispy form %}</form>

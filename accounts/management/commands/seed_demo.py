@@ -2,6 +2,8 @@ import random
 from datetime import date, time, timedelta, datetime
 from decimal import Decimal
 from django.core.management.base import BaseCommand
+
+from core import seed_kenya as ke
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -60,6 +62,23 @@ class Command(BaseCommand):
 
         self._print_summary()
 
+    def _ke_staff_ids(self, role=None):
+        """Kenyan statutory and professional identifiers for a staff member."""
+        ids = {
+            'national_id': ke.national_id(),
+            'kra_pin': ke.kra_pin(),
+            'nssf_number': ke.nssf_number(),
+            'sha_number': ke.sha_number(),
+        }
+        body = ke.REGULATOR_BY_ROLE.get(role)
+        if body:
+            ids.update({
+                'regulatory_body': body,
+                'license_number': ke.licence_number(body),
+                'license_expiry': date(self.today.year, 12, 31) if hasattr(self, 'today') else date(date.today().year, 12, 31),
+            })
+        return ids
+
     def _create_roles(self):
         from accounts.models import Role
         role_names = [
@@ -77,13 +96,13 @@ class Command(BaseCommand):
         self.admin_user, created = User.objects.get_or_create(
             username='admin',
             defaults={
-                'email': 'admin@medcare.com',
+                'email': 'admin@medcare.co.ke',
                 'first_name': 'System',
                 'last_name': 'Administrator',
-                'phone': '+8801700000000',
+                'phone': '+254700000000',
                 'gender': 'Male',
                 'date_of_birth': date(1985, 1, 15),
-                'address': 'MEDCARE Hospital, Dhaka, Bangladesh',
+                'address': ke.HOSPITAL_ADDRESS,
                 'is_superuser': True,
                 'is_staff': True,
             }
@@ -96,9 +115,10 @@ class Command(BaseCommand):
     def _create_branch(self):
         from hospitals.models import Branch
         self.branch = Branch.objects.create(
-            name='MEDCARE Main Branch',
-            address='123 Medical Road, Dhaka 1205, Bangladesh',
-            phone='+8801700000001', is_main_branch=True
+            name='MEDCARE Upper Hill (Main)',
+            address=ke.HOSPITAL_ADDRESS,
+            county='Nairobi', mfl_code='99999', keph_level=5, sha_accredited=True,
+            phone='+254700000001', is_main_branch=True
         )
         self.stdout.write('  Branch created.')
 
@@ -124,8 +144,8 @@ class Command(BaseCommand):
         for name, desc in dept_data:
             dept = Department.objects.create(
                 name=name, description=desc, branch=self.branch,
-                phone=f'+8801700{random.randint(100000,999999)}',
-                email=f'{name.lower().replace(" ", "")}@medcare.com'
+                phone=ke.landline(),
+                email=f'{name.lower().replace(" ", "")}@medcare.co.ke'
             )
             self.departments[name] = dept
         self.stdout.write('  Departments created.')
@@ -159,23 +179,24 @@ class Command(BaseCommand):
 
     def _create_insurance(self):
         from insurance.models import InsuranceProvider, InsurancePlan
-        providers = [
-            ('Pragati Life Insurance', 'Mr. Karim', '+8801711111111'),
-            ('MetLife Bangladesh', 'Ms. Rahima', '+8801722222222'),
-            ('Delta Life Insurance', 'Mr. Habib', '+8801733333333'),
-            ('National Life Insurance', 'Ms. Fatema', '+8801744444444'),
-        ]
+        providers = [(name, 'Provider Relations', ke.phone()) for name in ke.INSURERS]
         self.plans = []
         for name, contact, phone in providers:
             provider = InsuranceProvider.objects.create(
                 name=name, contact_person=contact, phone=phone,
-                email=f'{name.lower().replace(" ", "")}@email.com'
+                email=f'claims@{name.split()[0].lower().strip("()")}.example.com'
             )
-            plan_data = [
-                ('Basic Plan', 60, 500000),
-                ('Standard Plan', 75, 1000000),
-                ('Premium Plan', 90, 2000000),
-            ]
+            if 'SHA' in name:
+                plan_data = [
+                    ('SHIF – Primary Healthcare', 100, 0),
+                    ('SHIF – Social Health Insurance Fund', 100, 0),
+                ]
+            else:
+                plan_data = [
+                    ('Bronze (Outpatient KSh 50k / Inpatient KSh 500k)', 80, 500000),
+                    ('Silver (Outpatient KSh 100k / Inpatient KSh 1M)', 90, 1000000),
+                    ('Gold (Outpatient KSh 200k / Inpatient KSh 3M)', 100, 3000000),
+                ]
             for plan_name, coverage, max_cov in plan_data:
                 plan = InsurancePlan.objects.create(
                     provider=provider, name=f'{name} {plan_name}',
@@ -189,18 +210,18 @@ class Command(BaseCommand):
         from employees.models import Employee
         from doctors.models import Doctor, DoctorSchedule
         doctor_data = [
-            ('Rahim', 'Ahmed', 'Male', 'Cardiology', 'Interventional Cardiology', 1500, 15),
-            ('Fatima', 'Begum', 'Female', 'Neurology', 'Stroke', 1200, 12),
-            ('Karim', 'Hossain', 'Male', 'Pediatrics', 'Neonatology', 1000, 10),
-            ('Nasreen', 'Sultana', 'Female', 'Gynecology', 'Obstetrics', 1300, 8),
-            ('Anis', 'Miah', 'Male', 'Orthopedics', 'Joint Replacement', 1400, 20),
-            ('Sabrina', 'Islam', 'Female', 'Dermatology', 'Cosmetic Dermatology', 800, 6),
-            ('Habib', 'Ullah', 'Male', 'ENT', 'Rhinology', 900, 11),
-            ('Nazma', 'Akter', 'Female', 'Oncology', 'Medical Oncology', 1600, 14),
-            ('Rafiq', 'Uddin', 'Male', 'Surgery', 'General Surgery', 2000, 18),
-            ('Shirin', 'Parveen', 'Female', 'General Medicine', 'Internal Medicine', 700, 9),
-            ('Monir', 'Khan', 'Male', 'Radiology', 'Diagnostic Radiology', 1100, 7),
-            ('Lipi', 'Das', 'Female', 'Pathology', 'Clinical Pathology', 950, 5),
+            ('Wanjiku', 'Kamau', 'Female', 'Cardiology', 'Interventional Cardiology', 5000, 15),
+            ('Brian', 'Otieno', 'Male', 'Neurology', 'Stroke', 4500, 12),
+            ('Achieng', 'Odhiambo', 'Female', 'Pediatrics', 'Neonatology', 3500, 10),
+            ('Kiprop', 'Koech', 'Male', 'Gynecology', 'Obstetrics', 4000, 8),
+            ('Mutua', 'Musyoka', 'Male', 'Orthopedics', 'Joint Replacement', 4500, 20),
+            ('Fatuma', 'Hassan', 'Female', 'Dermatology', 'Cosmetic Dermatology', 3000, 6),
+            ('Peter', 'Wekesa', 'Male', 'ENT', 'Rhinology', 3000, 11),
+            ('Njeri', 'Mwangi', 'Female', 'Oncology', 'Medical Oncology', 5000, 14),
+            ('Samuel', 'Kariuki', 'Male', 'Surgery', 'General Surgery', 5000, 18),
+            ('Chebet', 'Rotich', 'Female', 'General Medicine', 'Internal Medicine', 2500, 9),
+            ('Abdi', 'Mohamed', 'Male', 'Radiology', 'Diagnostic Radiology', 3500, 7),
+            ('Nafula', 'Barasa', 'Female', 'Pathology', 'Clinical Pathology', 3000, 5),
         ]
         self.doctors = []
         for first, last, gender, dept, spec, fee, exp in doctor_data:
@@ -208,12 +229,12 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}.{last.lower()}@medcare.com',
+                    'email': f'{first.lower()}.{last.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': gender,
-                    'date_of_birth': date(1985 - exp + random.randint(25, 35), random.randint(1, 12), random.randint(1, 28)),
-                    'address': f'{random.randint(1,200)} Road, Dhaka',
+                    'date_of_birth': date(self.today.year - exp - random.randint(25, 35), random.randint(1, 12), random.randint(1, 28)),
+                    'address': ke.address(),
                 }
             )
             user.set_password('doctor123')
@@ -225,7 +246,8 @@ class Command(BaseCommand):
                     'department': self.departments[dept],
                     'designation': 'Senior Consultant',
                     'date_of_joining': date.today() - timedelta(days=365 * exp),
-                    'salary': Decimal(str(random.randint(80000, 200000))),
+                    'salary': Decimal(str(random.randint(25, 60) * 10000)),
+                    **self._ke_staff_ids('Doctor'),
                 }
             )
             doc, _ = Doctor.objects.get_or_create(
@@ -249,8 +271,8 @@ class Command(BaseCommand):
     def _create_nurses(self):
         from employees.models import Employee
         nurse_data = [
-            ('Taslima', 'Khatun'), ('Salma', 'Begum'), ('Roksana', 'Islam'),
-            ('Jesmin', 'Akter'), ('Nargis', 'Begum'),
+            ('Grace', 'Wambui'), ('Mercy', 'Akinyi'), ('Faith', 'Chebet'),
+            ('Esther', 'Mumbua'), ('Purity', 'Nyambura'),
         ]
         self.nurses = []
         for first, last in nurse_data:
@@ -258,9 +280,9 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}.{last.lower()}@medcare.com',
+                    'email': f'{first.lower()}.{last.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': 'Female',
                     'date_of_birth': date(random.randint(1985, 1995), random.randint(1, 12), random.randint(1, 28)),
                 }
@@ -272,9 +294,10 @@ class Command(BaseCommand):
             Employee.objects.get_or_create(
                 user=user,
                 defaults={
-                    'department': dept, 'designation': 'Staff Nurse',
+                    'department': dept, 'designation': 'Registered Nurse (KRCHN)',
                     'date_of_joining': date.today() - timedelta(days=random.randint(365, 1825)),
-                    'salary': Decimal(str(random.randint(30000, 50000))),
+                    'salary': Decimal(str(random.randint(7, 12) * 10000)),
+                    **self._ke_staff_ids('Nurse'),
                 }
             )
             self.nurses.append(user)
@@ -283,14 +306,14 @@ class Command(BaseCommand):
     def _create_pharmacists(self):
         from employees.models import Employee
         self.pharmacists = []
-        for first, last in [('Rahman', 'Ali'), ('Shahana', 'Parveen')]:
+        for first, last in [('Collins', 'Njoroge'), ('Lilian', 'Atieno')]:
             username = f'pharmacist.{first.lower()}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}@medcare.com',
+                    'email': f'{first.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': random.choice(['Male', 'Female']),
                 }
             )
@@ -303,7 +326,8 @@ class Command(BaseCommand):
                     'department': self.departments['Pharmacy'],
                     'designation': 'Senior Pharmacist',
                     'date_of_joining': date.today() - timedelta(days=random.randint(365, 1825)),
-                    'salary': Decimal(str(random.randint(40000, 60000))),
+                    'salary': Decimal(str(random.randint(9, 15) * 10000)),
+                    **self._ke_staff_ids('Pharmacist'),
                 }
             )
             self.pharmacists.append(user)
@@ -312,14 +336,14 @@ class Command(BaseCommand):
     def _create_lab_techs(self):
         from employees.models import Employee
         self.lab_techs = []
-        for first, last in [('Babul', 'Miah'), ('Rina', 'Begum')]:
+        for first, last in [('Dennis', 'Ochieng'), ('Caroline', 'Wanjala')]:
             username = f'labtech.{first.lower()}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}@medcare.com',
+                    'email': f'{first.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': random.choice(['Male', 'Female']),
                 }
             )
@@ -330,9 +354,10 @@ class Command(BaseCommand):
                 user=user,
                 defaults={
                     'department': self.departments['Pathology'],
-                    'designation': 'Lab Technician',
+                    'designation': 'Medical Laboratory Technologist',
                     'date_of_joining': date.today() - timedelta(days=random.randint(365, 1825)),
-                    'salary': Decimal(str(random.randint(25000, 40000))),
+                    'salary': Decimal(str(random.randint(5, 9) * 10000)),
+                    **self._ke_staff_ids('Lab Technician'),
                 }
             )
             self.lab_techs.append(user)
@@ -341,14 +366,14 @@ class Command(BaseCommand):
     def _create_accountants(self):
         from employees.models import Employee
         self.accountants = []
-        for first, last in [('Zahid', 'Hasan'), ('Nasrin', 'Akter')]:
+        for first, last in [('Kevin', 'Kimani'), ('Joy', 'Muriuki')]:
             username = f'accountant.{first.lower()}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}@medcare.com',
+                    'email': f'{first.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': random.choice(['Male', 'Female']),
                 }
             )
@@ -361,7 +386,8 @@ class Command(BaseCommand):
                     'department': self.departments['General Medicine'],
                     'designation': 'Senior Accountant',
                     'date_of_joining': date.today() - timedelta(days=random.randint(365, 1825)),
-                    'salary': Decimal(str(random.randint(45000, 70000))),
+                    'salary': Decimal(str(random.randint(7, 13) * 10000)),
+                    **self._ke_staff_ids(),
                 }
             )
             self.accountants.append(user)
@@ -370,14 +396,14 @@ class Command(BaseCommand):
     def _create_receptionists(self):
         from employees.models import Employee
         self.receptionists = []
-        for first, last in [('Sumon', 'Miah'), ('Ayesha', 'Khatun')]:
+        for first, last in [('Victor', 'Gitau'), ('Amina', 'Ali')]:
             username = f'receptionist.{first.lower()}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
-                    'email': f'{first.lower()}@medcare.com',
+                    'email': f'{first.lower()}@medcare.co.ke',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88018{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': random.choice(['Male', 'Female']),
                 }
             )
@@ -390,7 +416,8 @@ class Command(BaseCommand):
                     'department': self.departments['General Medicine'],
                     'designation': 'Front Desk',
                     'date_of_joining': date.today() - timedelta(days=random.randint(365, 1825)),
-                    'salary': Decimal(str(random.randint(20000, 35000))),
+                    'salary': Decimal(str(random.randint(3, 5) * 10000)),
+                    **self._ke_staff_ids(),
                 }
             )
             self.receptionists.append(user)
@@ -400,31 +427,31 @@ class Command(BaseCommand):
         from patients.models import Patient
         from insurance.models import PatientInsurance
         patient_data = [
-            ('Zara', 'Ghosh', 'Female', 'A+'),
-            ('Yasmin', 'Haque', 'Female', 'B+'),
-            ('William', 'Miah', 'Male', 'AB+'),
-            ('Varsha', 'Sarker', 'Female', 'A-'),
-            ('Tahsin', 'Reza', 'Male', 'O+'),
-            ('Taslima', 'Mazumder', 'Female', 'B-'),
-            ('Sakib', 'Hasan', 'Male', 'O+'),
-            ('Nafisa', 'Islam', 'Female', 'A+'),
-            ('Arif', 'Kabir', 'Male', 'B-'),
-            ('Sabrina', 'Mim', 'Female', 'O+'),
-            ('Rakib', 'Uddin', 'Male', 'AB+'),
-            ('Nargis', 'Das', 'Female', 'B+'),
-            ('Harper', 'Ghosh', 'Male', 'A+'),
-            ('Elizabeth', 'Khan', 'Female', 'O+'),
-            ('Lily', 'Begum', 'Female', 'AB+'),
-            ('Chloe', 'Haque', 'Female', 'O+'),
-            ('Tania', 'Rahman', 'Female', 'A-'),
-            ('Farhan', 'Alam', 'Male', 'B+'),
-            ('Mitu', 'Chowdhury', 'Female', 'O-'),
-            ('Shuvo', 'Das', 'Male', 'A+'),
-            ('Rupa', 'Mondol', 'Female', 'B-'),
-            ('Jahid', 'Sheikh', 'Male', 'AB-'),
-            ('Nilufa', 'Begum', 'Female', 'O+'),
-            ('Masum', 'Patwary', 'Male', 'A+'),
-            ('Fahima', 'Khatun', 'Female', 'B+'),
+            ('Zawadi', 'Njoroge', 'Female', 'A+'),
+            ('Juma', 'Omondi', 'Male', 'B+'),
+            ('Neema', 'Mutua', 'Female', 'AB+'),
+            ('Felix', 'Kiprotich', 'Male', 'A-'),
+            ('Wambui', 'Gitau', 'Female', 'O+'),
+            ('Hassan', 'Abdi', 'Male', 'B-'),
+            ('Akinyi', 'Ochieng', 'Female', 'O+'),
+            ('Daniel', 'Ndungu', 'Male', 'A+'),
+            ('Jepkosgei', 'Cheruiyot', 'Female', 'B-'),
+            ('Joseph', 'Wafula', 'Male', 'O+'),
+            ('Muthoni', 'Kariuki', 'Female', 'AB+'),
+            ('Mohamed', 'Ali', 'Male', 'B+'),
+            ('Naliaka', 'Wekesa', 'Female', 'A+'),
+            ('James', 'Onyango', 'Male', 'O+'),
+            ('Mumbua', 'Musyoka', 'Female', 'AB+'),
+            ('John', 'Kamau', 'Male', 'O+'),
+            ('Atieno', 'Odhiambo', 'Female', 'A-'),
+            ('Kibet', 'Koech', 'Male', 'B+'),
+            ('Njeri', 'Kimani', 'Female', 'O-'),
+            ('Otieno', 'Barasa', 'Male', 'A+'),
+            ('Fatuma', 'Mohamed', 'Female', 'B-'),
+            ('Mwangi', 'Muriuki', 'Male', 'AB-'),
+            ('Chebet', 'Rotich', 'Female', 'O+'),
+            ('Kamau', 'Nyambura', 'Male', 'A+'),
+            ('Faith', 'Wanjala', 'Female', 'B+'),
         ]
         self.patients = []
         for i, (first, last, gender, blood) in enumerate(patient_data):
@@ -434,23 +461,29 @@ class Command(BaseCommand):
                 defaults={
                     'email': f'{first.lower()}.{last.lower()}@email.com',
                     'first_name': first, 'last_name': last,
-                    'phone': f'+88017{random.randint(10000000,99999999)}',
+                    'phone': ke.phone(),
                     'gender': gender,
                     'date_of_birth': date(2026 - random.randint(20, 65), random.randint(1, 12), random.randint(1, 28)),
-                    'address': f'{random.randint(1,200)} Road, {random.choice(["Gulshan","Banani","Dhanmondi","Mirpur","Uttara"])}, Dhaka',
+                    'address': ke.address(),
                 }
             )
             user.set_password('patient123')
             user.save()
             user.roles.add(self.roles['Patient'])
+            county, sub_county, ward = ke.residence()
             pat, _ = Patient.objects.get_or_create(
                 user=user,
                 defaults={
+                    'id_type': 'national_id',
+                    'id_number': ke.national_id(),
+                    'sha_number': ke.sha_number() if random.random() > 0.15 else '',
+                    'county': county, 'sub_county': sub_county, 'ward': ward,
+                    'emergency_contact_relationship': random.choice(['Spouse', 'Parent', 'Sibling', 'Child']),
                     'blood_group': blood,
-                    'allergies': random.choice(['None', 'Penicillin', 'Aspirin', 'Dust', 'Pollen']),
-                    'medical_history': random.choice(['None', 'Diabetes', 'Hypertension', 'Asthma']),
+                    'allergies': random.choice(['None', 'Penicillin', 'Sulfa drugs', 'Dust', 'Pollen']),
+                    'medical_history': random.choice(['None', 'Diabetes', 'Hypertension', 'Asthma', 'Malaria (treated)', 'Sickle cell trait']),
                     'emergency_contact_name': f'{last} Family',
-                    'emergency_contact_phone': f'+88017{random.randint(10000000,99999999)}',
+                    'emergency_contact_phone': ke.phone(),
                 }
             )
             if random.random() > 0.3 and self.plans:
@@ -581,26 +614,22 @@ class Command(BaseCommand):
         from appointments.models import Visit
 
         category_map = {}
-        for cat_name in ['Analgesics', 'Antibiotics', 'Gastrointestinal', 'Antihistamines', 'Cardiovascular', 'Dermatology']:
+        for cat_name in ['Analgesics', 'Antibiotics', 'Antimalarials', 'Gastrointestinal', 'Antihistamines', 'Cardiovascular', 'Dermatology']:
             category_map[cat_name], _ = MedicineCategory.objects.get_or_create(
                 name=cat_name,
                 defaults={'description': f'{cat_name} medicines'}
             )
 
         suppliers = []
-        for name, contact, phone, email in [
-            ('Square Pharmaceuticals Ltd.', 'Mr. Ahmed', '+8801711111111', 'square@pharma.com'),
-            ('Beximco Pharmaceuticals Ltd.', 'Mr. Rashid', '+8801722222222', 'beximco@pharma.com'),
-            ('Incepta Pharmaceuticals Ltd.', 'Mr. Kabir', '+8801733333333', 'incepta@pharma.com'),
-            ('Renata Limited', 'Ms. Sultana', '+8801744444444', 'renata@pharma.com'),
-        ]:
+        for name, contact, email in ke.PHARMA_SUPPLIERS:
+            phone = ke.phone()
             supplier, _ = Supplier.objects.get_or_create(
                 name=name,
                 defaults={
                     'contact_person': contact,
                     'phone': phone,
                     'email': email,
-                    'address': 'Dhaka, Bangladesh',
+                    'address': 'Nairobi, Kenya',
                 },
             )
             suppliers.append(supplier)
@@ -617,6 +646,8 @@ class Command(BaseCommand):
             ('Pantoprazole 40mg', 'Pantoprazole', 'Tablet', 'Gastrointestinal', 12.00, 280),
             ('Azithromycin 500mg', 'Azithromycin', 'Capsule', 'Antibiotics', 18.00, 250),
             ('Diclofenac Gel', 'Diclofenac', 'Ointment', 'Dermatology', 65.00, 150),
+            ('Artemether/Lumefantrine 20/120mg', 'Artemether-Lumefantrine', 'Tablet', 'Antimalarials', 25.00, 400),
+            ('ORS + Zinc Co-pack', 'Oral Rehydration Salts + Zinc', 'Tablet', 'Gastrointestinal', 40.00, 300),
         ]
         medicines = []
         for name, generic, cat, category_fk, price, stock in med_data:
@@ -628,7 +659,7 @@ class Command(BaseCommand):
                     'minimum_stock': 50,
                     'expiry_date': date(random.choice([2027, 2028]), random.randint(1, 12), random.randint(1, 28)),
                     'batch_number': f'BATCH-{random.randint(1000,9999)}',
-                    'manufacturer': random.choice(['Beximco', 'Square', 'Incepta', 'Renata']),
+                    'manufacturer': random.choice(ke.MANUFACTURERS),
                 }
             )
             if not med.category_fk:
@@ -786,7 +817,7 @@ class Command(BaseCommand):
             ('Dressing', 1, 200),
             ('Physiotherapy Session', 1, 800),
         ]
-        payment_methods = ['Cash', 'Card', 'Bank Transfer', 'Mobile Banking']
+        payment_methods = ke.PAYMENT_METHODS
 
         # Create invoices spread across last 60 days
         for day_offset in range(-60, 1):
@@ -834,8 +865,7 @@ class Command(BaseCommand):
                     Payment.objects.create(
                         invoice=invoice,
                         amount=invoice.net_amount,
-                        payment_method=random.choice(payment_methods),
-                        transaction_id=f'TXN-{random.randint(100000,999999)}',
+                        **ke.payment(payment_methods),
                         received_by=self.admin_user,
                     )
                 elif status == 'Partial':
@@ -843,8 +873,7 @@ class Command(BaseCommand):
                     Payment.objects.create(
                         invoice=invoice,
                         amount=partial,
-                        payment_method=random.choice(payment_methods),
-                        transaction_id=f'TXN-{random.randint(100000,999999)}',
+                        **ke.payment(payment_methods),
                         received_by=self.admin_user,
                     )
         self.stdout.write('  Invoices & payments created.')
@@ -943,9 +972,9 @@ class Command(BaseCommand):
         from ambulance.models import Ambulance, AmbulanceRequest
 
         ambulances = [
-            ('DHAKA-METRO-001', 'Basic', 'Rahim Miah', '+8801711111111'),
-            ('DHAKA-METRO-002', 'AC', 'Karim Uddin', '+8801722222222'),
-            ('DHAKA-METRO-003', 'ICU', 'Babul Sheikh', '+8801733333333'),
+            ('KDJ 101A', 'Basic', 'Joseph Kamau', ke.phone()),
+            ('KDK 202B', 'AC', 'Hassan Juma', ke.phone()),
+            ('KDL 303C', 'ICU', 'Peter Otieno', ke.phone()),
         ]
         amb_objs = []
         for vnum, vtype, driver, phone in ambulances:
@@ -957,15 +986,15 @@ class Command(BaseCommand):
             amb_objs.append(amb)
 
         locations = [
-            ('Gulshan', 'Banani'), ('Dhanmondi', 'Mirpur'),
-            ('Uttara', 'Motijheel'), ('Mohammadpur', 'Tejgaon'),
+            ('Westlands', 'Kilimani'), ('Lavington', 'Kasarani'),
+            ('Karen', 'CBD'), ('South B', 'Embakasi'),
         ]
         for i in range(10):
             pickup, dropoff = random.choice(locations)
             AmbulanceRequest.objects.create(
                 patient_name=f'Emergency Patient {i+1}',
-                patient_phone=f'+88017{random.randint(10000000,99999999)}',
-                pickup_location=f'{pickup}, Dhaka',
+                patient_phone=ke.phone(),
+                pickup_location=f'{pickup}, Nairobi',
                 dropoff_location=f'MEDCARE Hospital, {dropoff}',
                 ambulance=random.choice(amb_objs),
                 status=random.choice(['Pending', 'Dispatched', 'In-Transit', 'Completed']),
@@ -1058,7 +1087,7 @@ class Command(BaseCommand):
         Training.objects.create(
             title='Infection Control Workshop',
             description='Hand hygiene, PPE, isolation protocol, and waste management workshop',
-            trainer='Nurse Educator Taslima Khatun',
+            trainer='Nurse Educator Grace Wambui',
             start_date=self.today + timedelta(days=5),
             end_date=self.today + timedelta(days=7),
             status='Planned',
@@ -1110,7 +1139,7 @@ class Command(BaseCommand):
         ]
         messages = [
             'Your appointment has been confirmed for tomorrow.',
-            'Payment of ৳1500 has been received successfully.',
+            'Payment of KSh 1500 has been received successfully.',
             'Your lab results are ready for collection.',
             'Your prescription has been dispensed.',
             'System maintenance scheduled for this weekend.',
@@ -1177,12 +1206,12 @@ class Command(BaseCommand):
         self.stdout.write('')
         self.stdout.write('Login credentials:')
         self.stdout.write('  Admin:        admin / admin123')
-        self.stdout.write('  Doctor:       dr.rahim.ahmed / doctor123')
-        self.stdout.write('  Patient:      patient.zara.ghosh / patient123')
-        self.stdout.write('  Nurse:        nurse.taslima.khatun / nurse123')
-        self.stdout.write('  Pharmacist:   pharmacist.rahman / pharmacist123')
-        self.stdout.write('  Lab Tech:     labtech.babul / lab123')
-        self.stdout.write('  Accountant:   accountant.zahid / accountant123')
-        self.stdout.write('  Receptionist: receptionist.sumon / receptionist123')
+        self.stdout.write('  Doctor:       dr.wanjiku.kamau / doctor123')
+        self.stdout.write('  Patient:      patient.zawadi.njoroge / patient123')
+        self.stdout.write('  Nurse:        nurse.grace.wambui / nurse123')
+        self.stdout.write('  Pharmacist:   pharmacist.collins / pharmacist123')
+        self.stdout.write('  Lab Tech:     labtech.dennis / lab123')
+        self.stdout.write('  Accountant:   accountant.kevin / accountant123')
+        self.stdout.write('  Receptionist: receptionist.victor / receptionist123')
         self.stdout.write('')
         self.stdout.write('Run: python manage.py migrate && python manage.py runserver')

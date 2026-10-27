@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Lab Order Detail - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Lab Order Detail - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-clipboard2-data"></i> Lab Order {{ order.order_number }}</h4>

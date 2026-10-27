@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Invoice {{ invoice.invoice_number }} - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Invoice {{ invoice.invoice_number }} - {% hospital "name" %}{% endblock %}
 {% block extra_css %}
 <style>
     @media print {
@@ -23,7 +23,9 @@
 <div class="card">
     <div class="card-body">
         <div class="invoice-header text-center">
-            <h2>MEDCARE HOSPITAL & DIAGNOSTIC CENTER</h2>
+            <h2>{% hospital "name" %}</h2>
+            <p class="small mb-1">{% hospital "address" %} · Tel: {% hospital "phone" %} · {% hospital "email" %}</p>
+            {% if hospital_kra_pin %}<p class="small mb-1">KRA PIN: {{ hospital_kra_pin }}</p>{% endif %}
             <p class="text-muted mb-0">Medical Invoice</p>
         </div>
 
@@ -59,8 +61,8 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ item.description }}</td>
                         <td class="text-center">{{ item.quantity }}</td>
-                        <td class="text-end">{{ item.unit_price|floatformat:2 }}</td>
-                        <td class="text-end">{{ item.total_price|floatformat:2 }}</td>
+                        <td class="text-end">{{ item.unit_price|ksh }}</td>
+                        <td class="text-end">{{ item.total_price|ksh }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -76,17 +78,24 @@
             </div>
             <div class="col-md-6">
                 <table class="table table-sm table-borderless" style="width:250px; float:right">
-                    <tr><th>Subtotal:</th><td class="text-end">{{ invoice.total_amount|floatformat:2 }}</td></tr>
-                    {% if invoice.discount > 0 %}<tr><th>Discount:</th><td class="text-end text-danger">-{{ invoice.discount|floatformat:2 }}</td></tr>{% endif %}
-                    {% if invoice.tax > 0 %}<tr><th>Tax:</th><td class="text-end">{{ invoice.tax|floatformat:2 }}</td></tr>{% endif %}
-                    <tr class="border-top border-2"><th class="fs-5">TOTAL:</th><td class="text-end fs-5 fw-bold">{{ invoice.net_amount|floatformat:2 }}</td></tr>
-                    <tr class="text-success"><th>Paid:</th><td class="text-end">{{ invoice.paid_amount|floatformat:2 }}</td></tr>
+                    <tr><th>Subtotal:</th><td class="text-end">{{ invoice.total_amount|ksh }}</td></tr>
+                    {% if invoice.discount > 0 %}<tr><th>Discount:</th><td class="text-end text-danger">-{{ invoice.discount|ksh }}</td></tr>{% endif %}
+                    {% if invoice.tax > 0 %}<tr><th>Tax:</th><td class="text-end">{{ invoice.tax|ksh }}</td></tr>{% endif %}
+                    <tr class="border-top border-2"><th class="fs-5">TOTAL:</th><td class="text-end fs-5 fw-bold">{{ invoice.net_amount|ksh }}</td></tr>
+                    <tr class="text-success"><th>Paid:</th><td class="text-end">{{ invoice.paid_amount|ksh }}</td></tr>
                     {% if invoice.due_amount > 0 %}
-                    <tr class="text-danger"><th>DUE:</th><td class="text-end fw-bold">{{ invoice.due_amount|floatformat:2 }}</td></tr>
+                    <tr class="text-danger"><th>DUE:</th><td class="text-end fw-bold">{{ invoice.due_amount|ksh }}</td></tr>
                     {% endif %}
                 </table>
             </div>
         </div>
+
+        {% if invoice.due_amount > 0 and mpesa_enabled %}
+        <div class="alert alert-success mt-3 mb-0">
+            <strong>Pay with M-Pesa:</strong> Lipa na M-Pesa → Pay Bill → Business No. <strong>{% hospital "paybill" %}</strong>,
+            Account No. <strong>{{ invoice.invoice_number }}</strong>, Amount <strong>{{ invoice.due_amount|ksh:0 }}</strong>.
+        </div>
+        {% endif %}
 
         <div class="row mt-5">
             <div class="col-md-6">
@@ -98,7 +107,7 @@
         </div>
 
         <div class="text-center mt-3">
-            <small class="text-muted">Thank you for choosing MEDCARE HOSPITAL & DIAGNOSTIC CENTER</small>
+            <small class="text-muted">Thank you for choosing {% hospital "name" %}</small>
         </div>
     </div>
 </div>

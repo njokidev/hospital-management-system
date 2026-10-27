@@ -10,14 +10,17 @@
     <div class="card-body">
         <table class="table table-hover datatable" id="branchTable">
             <thead>
-                <tr><th>Name</th><th>Phone</th><th>Address</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Name</th><th>County</th><th>MFL Code</th><th>KEPH Level</th><th>SHA</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 {% for branch in branches %}
                 <tr>
                     <td>{{ branch.name }}</td>
-                    <td>{{ branch.phone }}</td>
-                    <td>{{ branch.address|truncatewords:5 }}</td>
+                    <td>{{ branch.county|default:"-" }}</td>
+                    <td>{{ branch.mfl_code|default:"-" }}</td>
+                    <td>{% if branch.keph_level %}Level {{ branch.keph_level }}{% else %}-{% endif %}</td>
+                    <td>{% if branch.sha_accredited %}<span class="badge bg-success">Accredited</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                    <td>{{ branch.phone|ke_phone }}</td>
                     <td><span class="badge bg-{% if branch.is_active %}success{% else %}danger{% endif %}">{% if branch.is_active %}Active{% else %}Inactive{% endif %}</span></td>
                     <td>
                         <a href="{% url 'hospitals:branch_update' branch.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
@@ -25,7 +28,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">No branches found</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">No branches found</td></tr>
                 {% endfor %}
             </tbody>
         </table>

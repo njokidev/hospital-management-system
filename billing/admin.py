@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Invoice, InvoiceItem, Payment, PaymentReceipt
+from .models import Invoice, InvoiceItem, Payment, PaymentReceipt, MpesaTransaction
 
 
 class InvoiceItemInline(admin.TabularInline):
@@ -70,3 +70,11 @@ class PaymentReceiptAdmin(admin.ModelAdmin):
     list_display = ['receipt_number', 'payment', 'generated_at']
     raw_id_fields = ['payment']
     date_hierarchy = 'generated_at'
+
+
+@admin.register(MpesaTransaction)
+class MpesaTransactionAdmin(admin.ModelAdmin):
+    list_display = ['checkout_request_id', 'invoice', 'phone', 'amount', 'status', 'mpesa_receipt_number', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['checkout_request_id', 'mpesa_receipt_number', 'phone', 'invoice__invoice_number']
+    readonly_fields = [f.name for f in MpesaTransaction._meta.fields]

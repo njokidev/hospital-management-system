@@ -29,13 +29,16 @@
             <div class="card-header"><h6 class="mb-0">Personal Information</h6></div>
             <div class="card-body">
                 <table class="table table-borderless mb-0">
-                    <tr><th width="40%">Phone</th><td>{{ object.phone }}</td></tr>
-                    <tr><th>Email</th><td>{{ object.user.email }}</td></tr>
-                    <tr><th>Date of Birth</th><td>{{ object.date_of_birth|date:"d M Y"|default:"-" }}</td></tr>
-                    <tr><th>Gender</th><td>{{ object.get_gender_display|default:"-" }}</td></tr>
+                    <tr><th width="40%">Phone</th><td>{{ object.user.phone|ke_phone|default:"-" }}</td></tr>
+                    <tr><th>Email</th><td>{{ object.user.email|default:"-" }}</td></tr>
+                    <tr><th>{{ object.get_id_type_display }}</th><td>{{ object.id_number|default:"-" }}</td></tr>
+                    <tr><th>SHA Number</th><td>{{ object.sha_number|default:"-" }}</td></tr>
+                    <tr><th>Date of Birth</th><td>{{ object.user.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>
+                    <tr><th>Gender</th><td>{{ object.user.get_gender_display|default:"-" }}</td></tr>
                     <tr><th>Blood Group</th><td>{{ object.blood_group|default:"-" }}</td></tr>
-                    <tr><th>Address</th><td>{{ object.address|default:"-" }}</td></tr>
-                    <tr><th>Emergency Contact</th><td>{{ object.emergency_contact|default:"-" }}</td></tr>
+                    <tr><th>County</th><td>{{ object.county|default:"-" }}{% if object.sub_county %}, {{ object.sub_county }}{% endif %}{% if object.ward %} ({{ object.ward }}){% endif %}</td></tr>
+                    <tr><th>Address</th><td>{{ object.user.address|default:"-" }}</td></tr>
+                    <tr><th>Next of Kin</th><td>{% if object.emergency_contact_name %}{{ object.emergency_contact_name }}{% if object.emergency_contact_relationship %} ({{ object.emergency_contact_relationship }}){% endif %}<br><small>{{ object.emergency_contact_phone|ke_phone }}</small>{% else %}-{% endif %}</td></tr>
                     <tr><th>Insurance No.</th><td>{% if object.insurances.first %}{{ object.insurances.first.plan.name }} ({{ object.insurances.first.policy_number }}){% elif object.insurance_provider %}{{ object.insurance_provider.name }}{% else %}-{% endif %}</td></tr>
                 </table>
             </div>
@@ -123,7 +126,7 @@
                                 <tr>
                                     <td>{{ bill.bill_number }}</td>
                                     <td>{{ bill.created_at|date:"d M Y" }}</td>
-                                    <td>৳{{ bill.total_amount }}</td>
+                                    <td>{{ bill.total_amount|ksh }}</td>
                                     <td>
                                         <span class="badge bg-{% if bill.status == 'paid' %}success{% elif bill.status == 'partial' %}warning{% else %}danger{% endif %}">
                                             {{ bill.get_status_display }}

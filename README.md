@@ -3,7 +3,57 @@
 A comprehensive, role-based **Hospital Information Management System** built with Django. Designed for hospitals and diagnostic centers to manage patients, doctors, appointments, billing, pharmacy, laboratory, radiology, IPD/OPD, nursing, inventory, HR, and administrative workflows — all from a single dashboard.
 
 > **Project Status:** Active Development  
-> **License:** MIT
+> **License:** MIT  
+> **Edition:** 🇰🇪 Kenya (`development` branch)
+
+---
+
+## 🇰🇪 Kenya Edition
+
+This branch adapts MedCare for Kenyan hospitals and clinics:
+
+| Area | What changed |
+|------|--------------|
+| **Locale** | `Africa/Nairobi` time zone, British English (`en-gb`) date formats, all money shown in **KSh** with thousands separators |
+| **Payments** | **M-Pesa** (default), Airtel Money, Card, Bank Transfer/EFT/RTGS, Cheque, **SHA** and Private Insurance. M-Pesa codes are validated (10 characters) and can't be reused |
+| **Lipa Na M-Pesa (STK Push)** | "Send payment prompt" on every unpaid invoice — patients can pay their own bills. Safaricom's callback records the payment, issues a receipt and marks the invoice Paid/Partial automatically. Printed invoices show Paybill + account number |
+| **Patients** | ID type (National ID, Birth Certificate, Passport, Alien/Refugee ID) and number, **SHA member number**, County / Sub-county / Ward (all 47 counties), next-of-kin relationship. Duplicate ID/SHA numbers are blocked |
+| **Phone numbers** | Every phone field accepts `0712 345 678`, `0110…`, `+254…` and stores E.164 (`+254712345678`) |
+| **Staff / HR** | National ID, **KRA PIN** (validated), NSSF and SHA numbers, professional regulator (**KMPDC, COC, NCK, PPB, KMLTTB** …), licence number and expiry with "Renew soon"/"Expired" badges |
+| **Leave** | Employment Act categories: Annual (21 days), Sick, Maternity (3 months), Paternity (2 weeks), Compassionate, Study, Unpaid |
+| **Facilities** | Branches carry **MFL code**, County, **KEPH level (1–6)** and SHA accreditation |
+| **Insurance** | `python manage.py load_kenyan_insurers` creates SHA schemes (SHIF, PHC Fund, ECCIF) and common Kenyan private insurers |
+| **Branding** | Hospital name, address, phone, KRA PIN and MFL code come from environment variables — no hard-coded text in templates |
+| **Demo data** | Kenyan names, Nairobi addresses, +254 numbers, Kenyan suppliers (KEMSA, MEDS …), antimalarials, M-Pesa receipts, Kenyan number plates |
+
+### M-Pesa configuration
+
+STK Push is off until these environment variables are set (manual M-Pesa entry works regardless):
+
+```bash
+MPESA_ENVIRONMENT=sandbox            # or production
+MPESA_CONSUMER_KEY=...               # Daraja app credentials
+MPESA_CONSUMER_SECRET=...
+MPESA_SHORTCODE=174379               # your Paybill / Till
+MPESA_PASSKEY=...
+MPESA_TRANSACTION_TYPE=CustomerPayBillOnline   # CustomerBuyGoodsOnline for a Till
+MPESA_CALLBACK_BASE_URL=https://your-domain.co.ke   # must be public HTTPS
+MPESA_CALLBACK_TOKEN=a-long-random-string           # secret part of the callback URL
+```
+
+Safaricom posts results to `/billing/mpesa/callback/<MPESA_CALLBACK_TOKEN>/`. For local testing, expose the dev server with a tunnel (e.g. ngrok) and use that URL as `MPESA_CALLBACK_BASE_URL`.
+
+### Hospital identity
+
+```bash
+HOSPITAL_NAME="NAIROBI WEST MEDICAL CENTRE"
+HOSPITAL_ADDRESS="Mbagathi Way, Nairobi"
+HOSPITAL_PHONE="+254 700 000 000"
+HOSPITAL_EMAIL=info@example.co.ke
+HOSPITAL_KRA_PIN=P000000000X
+HOSPITAL_MFL_CODE=12345
+DJANGO_SECRET_KEY=...  DJANGO_DEBUG=False  DJANGO_ALLOWED_HOSTS=your-domain.co.ke
+```
 
 
 ---
@@ -15,6 +65,7 @@ A comprehensive, role-based **Hospital Information Management System** built wit
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Quick Start](#quick-start)
+- [Kenya Edition](#-kenya-edition)
 - [Default Credentials](#default-credentials)
 - [Usage Guide](#usage-guide)
 - [Deployment](#deployment)
@@ -104,7 +155,8 @@ A comprehensive, role-based **Hospital Information Management System** built wit
 
 ### 💰 Billing & Payments
 - **Invoices** with auto-generated numbers (`INV-XXXXXX`), line items, discount, tax, and net amount
-- **Payments** with methods: Cash, Card, Bank Transfer, Mobile Banking, Insurance
+- **Payments** with methods: M-Pesa, Cash, Airtel Money, Card, Bank Transfer, Cheque, SHA, Private Insurance
+- **Lipa Na M-Pesa STK Push** with automatic reconciliation from Safaricom's callback
 - Auto-generated **payment receipts** (`REC-XXXXXX`)
 - Due tracking with outstanding balance reports
 - Revenue reports (daily, weekly, monthly)
@@ -262,7 +314,7 @@ Hospital Management System/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/tasmiul/hospital-management-system-django.git
+git clone -b development https://github.com/njokidev/hospital-management-system.git
 cd hospital-management-system
 
 # 2. Create and activate a virtual environment
@@ -281,13 +333,16 @@ python manage.py migrate
 # 5. Create a superuser (admin)
 python manage.py createsuperuser
 
-# 6. (Optional) Load demo data
+# 6. Load SHA schemes and Kenyan insurers (safe to re-run)
+python manage.py load_kenyan_insurers
+
+# 7. (Optional) Load demo data — WARNING: clears all existing data
 python manage.py seed_demo
 
-# 7. Start the development server
+# 8. Start the development server
 python manage.py runserver
 
-# 8. Open in browser
+# 9. Open in browser
 #    http://127.0.0.1:8000/
 ```
 
@@ -302,14 +357,13 @@ After running `seed_demo`:
 | Role | Username | Password |
 |------|----------|----------|
 | **Admin** | `admin` | `admin123` |
-| **Doctor** | `dr.rahim.ahmed` | `doctor123` |
-| **Nurse** | `nurse.taslima.khatun` | `nurse123` |
-| **Patient** | `patient.zara.ghosh` | `patient123` |
-| **Pharmacist** | `pharm.kamal.hossain` | `pharmacist123` |
-| **Lab Technician** | `lab.nadia.akter` | `lab123` |
-| **Accountant** | `acct.farhan.islam` | `accountant123` |
-| **Receptionist** | `recep.sumon.mia` | `receptionist123` |
-| **HR Manager** | `hr.nusrat.jahan` | `hr123` |
+| **Doctor** | `dr.wanjiku.kamau` | `doctor123` |
+| **Nurse** | `nurse.grace.wambui` | `nurse123` |
+| **Patient** | `patient.zawadi.njoroge` | `patient123` |
+| **Pharmacist** | `pharmacist.collins` | `pharmacist123` |
+| **Lab Technician** | `labtech.dennis` | `lab123` |
+| **Accountant** | `accountant.kevin` | `accountant123` |
+| **Receptionist** | `receptionist.victor` | `receptionist123` |
 
 Demo data includes: 14 departments, 12+ doctors with schedules, 25+ patients, 400+ appointments, prescriptions, lab/radiology orders, billing records, IPD wards/beds/admissions, ambulance fleet, inventory items, HR records, and more.
 
@@ -395,8 +449,9 @@ Demo data includes: 14 departments, 12+ doctors with schedules, 25+ patients, 40
 ## Deployment
 
 ### Production Checklist
-- [ ] Set `DEBUG=False` and configure `ALLOWED_HOSTS` in `medcare/settings.py`
-- [ ] Use a strong, unique `SECRET_KEY` (move to environment variable)
+- [ ] Set `DJANGO_DEBUG=False` and `DJANGO_ALLOWED_HOSTS`
+- [ ] Set a strong, unique `DJANGO_SECRET_KEY`
+- [ ] Set the M-Pesa variables above (production Daraja credentials) and a random `MPESA_CALLBACK_TOKEN`
 - [ ] Configure a production database (PostgreSQL or MySQL)
 - [ ] Set up a proper email backend (SMTP) for notifications
 - [ ] Serve static and media files via Nginx or a CDN
@@ -415,6 +470,7 @@ crispy-bootstrap5>=0.7
 Pillow>=10.0
 openpyxl>=3.1
 xhtml2pdf>=0.2.11
+requests>=2.31
 ```
 
 ## License
@@ -455,6 +511,3 @@ SOFTWARE.
 - Charts powered by [Chart.js](https://www.chartjs.org/)
 - PDF generation by [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf)
 - Excel exports via [openpyxl](https://openpyxl.readthedocs.io/)
-#   h o s p i t a l - m a n a g e m e n t - s y s t e m  
- #   h o s p i t a l - m a n a g e m e n t - s y s t e m  
- 

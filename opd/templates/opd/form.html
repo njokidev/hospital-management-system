@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% if form.instance.pk %}Edit OPD Visit{% else %}New OPD Visit{% endif %} - MEDCARE{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit OPD Visit{% else %}New OPD Visit{% endif %} - {% hospital "short_name" %}{% endblock %}
 
 {% block content %}
 <div class="row">

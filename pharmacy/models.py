@@ -152,4 +152,4 @@ class DispensedMedicine(models.Model):
         verbose_name_plural = 'Dispensed Medicines'
 
     def __str__(self):
-        return f"Dispensed: {self.prescription} - ${self.total_cost}"
+        return f"Dispensed: {self.prescription} - {settings.CURRENCY_SYMBOL} {self.total_cost}"

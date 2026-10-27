@@ -13,7 +13,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h3 class="mb-0">{{ total_revenue|floatformat:0 }}</h3>
-                        <p class="mb-0 opacity-75">Total Revenue (৳)</p>
+                        <p class="mb-0 opacity-75">Total Revenue ({% currency %})</p>
                     </div>
                     <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
                 </div>
@@ -26,7 +26,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h3 class="mb-0">{{ today_revenue|floatformat:0 }}</h3>
-                        <p class="mb-0 opacity-75">Today's Revenue (৳)</p>
+                        <p class="mb-0 opacity-75">Today's Revenue ({% currency %})</p>
                     </div>
                     <i class="bi bi-calendar-today fs-1 opacity-50"></i>
                 </div>
@@ -39,7 +39,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h3 class="mb-0">{{ weekly_revenue|floatformat:0 }}</h3>
-                        <p class="mb-0 opacity-75">Weekly Revenue (৳)</p>
+                        <p class="mb-0 opacity-75">Weekly Revenue ({% currency %})</p>
                     </div>
                     <i class="bi bi-calendar-week fs-1 opacity-50"></i>
                 </div>
@@ -52,7 +52,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h3 class="mb-0">{{ monthly_revenue|floatformat:0 }}</h3>
-                        <p class="mb-0 opacity-75">Monthly Revenue (৳)</p>
+                        <p class="mb-0 opacity-75">Monthly Revenue ({% currency %})</p>
                     </div>
                     <i class="bi bi-calendar-month fs-1 opacity-50"></i>
                 </div>
@@ -68,7 +68,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h3 class="mb-0">{{ total_outstanding|floatformat:0 }}</h3>
-                        <p class="mb-0 opacity-75">Total Outstanding (৳)</p>
+                        <p class="mb-0 opacity-75">Total Outstanding ({% currency %})</p>
                     </div>
                     <i class="bi bi-exclamation-circle fs-1 opacity-50"></i>
                 </div>
@@ -89,7 +89,7 @@
                         <th>#</th>
                         <th>Invoice #</th>
                         <th>Patient</th>
-                        <th>Amount (৳)</th>
+                        <th>Amount ({% currency %})</th>
                         <th>Date</th>
                     </tr>
                 </thead>
@@ -99,7 +99,7 @@
                         <td>{{ forloop.counter }}</td>
                         <td><strong>{{ invoice.invoice_number }}</strong></td>
                         <td>{{ invoice.patient.full_name|default:invoice.patient }}</td>
-                        <td>{{ invoice.net_amount|floatformat:2 }}</td>
+                        <td>{{ invoice.net_amount|floatformat:"2g" }}</td>
                         <td>{{ invoice.created_at|date:"d-M-Y" }}</td>
                     </tr>
                     {% empty %}

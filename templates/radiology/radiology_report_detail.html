@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Radiology Report - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Radiology Report - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-file-earmark-xray"></i> Radiology Report - {{ report.order.order_number }}</h4>

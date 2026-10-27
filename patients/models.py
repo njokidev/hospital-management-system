@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from core.kenya import COUNTY_CHOICES, ID_TYPE_CHOICES, RELATIONSHIP_CHOICES
+
 
 class Patient(models.Model):
     BLOOD_GROUP_CHOICES = [
@@ -17,10 +19,24 @@ class Patient(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_profile')
     patient_id = models.CharField(max_length=20, unique=True, editable=False)
     blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True)
+
+    # ── Kenyan identification & residence ──
+    id_type = models.CharField('ID type', max_length=20, choices=ID_TYPE_CHOICES, default='national_id')
+    id_number = models.CharField('ID / document number', max_length=30, blank=True, db_index=True)
+    sha_number = models.CharField(
+        'SHA member number', max_length=30, blank=True, db_index=True,
+        help_text='Social Health Authority (SHIF) membership number',
+    )
+    county = models.CharField(max_length=30, choices=COUNTY_CHOICES, blank=True)
+    sub_county = models.CharField(max_length=100, blank=True)
+    ward = models.CharField('Ward / estate', max_length=100, blank=True)
     allergies = models.TextField(blank=True)
     medical_history = models.TextField(blank=True)
     emergency_contact_name = models.CharField(max_length=200, blank=True)
     emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    emergency_contact_relationship = models.CharField(
+        'Next of kin relationship', max_length=20, choices=RELATIONSHIP_CHOICES, blank=True,
+    )
     insurance_provider = models.ForeignKey(
         'insurance.InsurancePlan',
         on_delete=models.SET_NULL,

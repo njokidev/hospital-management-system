@@ -17,4 +17,8 @@ urlpatterns = [
     path('payments/<int:pk>/', views.payment_detail_view, name='payment_detail'),
     path('dues/', views.due_list_view, name='due_list'),
     path('revenue-report/', views.revenue_report_view, name='revenue_report'),
+    # M-Pesa
+    path('invoices/<int:invoice_id>/mpesa/', views.mpesa_stk_push_view, name='mpesa_stk_push'),
+    path('mpesa/transactions/<int:pk>/status/', views.mpesa_status_view, name='mpesa_status'),
+    path('mpesa/callback/<str:token>/', views.mpesa_callback_view, name='mpesa_callback'),
 ]

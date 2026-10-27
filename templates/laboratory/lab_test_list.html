@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Lab Tests - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Lab Tests - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-droplet"></i> Lab Tests</h4>
@@ -15,7 +15,7 @@
                         <th>Test Name</th>
                         <th>Code</th>
                         <th>Category</th>
-                        <th>Price (৳)</th>
+                        <th>Price ({% currency %})</th>
                         <th>Sample Type</th>
                         <th>TAT</th>
                         <th>Status</th>
@@ -29,7 +29,7 @@
                         <td><strong>{{ test.name }}</strong></td>
                         <td><code>{{ test.code }}</code></td>
                         <td><span class="badge bg-info">{{ test.category|default:"-" }}</span></td>
-                        <td>{{ test.price|floatformat:2 }}</td>
+                        <td>{{ test.price|floatformat:"2g" }}</td>
                         <td>{{ test.sample_type|default:"-" }}</td>
                         <td>{{ test.turnaround_time|default:"-" }}</td>
                         <td>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Lab Report - {{ order.order_number }} - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Lab Report - {{ order.order_number }} - {% hospital "name" %}{% endblock %}
 {% block extra_css %}
 <style>
     @media print {
@@ -24,7 +24,7 @@
 <div class="card">
     <div class="card-body">
         <div class="report-header text-center">
-            <h2>MEDCARE HOSPITAL & DIAGNOSTIC CENTER</h2>
+            <h2>{% hospital "name" %}</h2>
             <p class="text-muted mb-0">Laboratory Report</p>
         </div>
 

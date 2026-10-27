@@ -155,9 +155,9 @@
 <div class="watermark">MEDCARE</div>
 
 <div class="header">
-    <h1>MEDCARE HOSPITAL &amp; DIAGNOSTIC CENTER</h1>
-    <div class="subtitle">123 Health Avenue, Medical District, Dhaka 1205</div>
-    <div class="contact">Phone: +880-1234-567890 | Email: info@medcare.com | www.medcare.com</div>
+    <h1>{% hospital "name" %}</h1>
+    <div class="subtitle">{% hospital "address" %}</div>
+    <div class="contact">Phone: {% hospital "phone" %} | Email: {% hospital "email" %} | {% hospital "website" %}</div>
 </div>
 
 <div class="rx-title">Prescription</div>

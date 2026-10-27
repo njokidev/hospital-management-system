@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Field, Div, HTML
+from core.kenya import KenyanPhoneFormMixin, validate_national_id
 from .models import User, Role
 
 
@@ -35,7 +36,7 @@ class UserLoginForm(AuthenticationForm):
         )
 
 
-class PatientRegistrationForm(UserCreationForm):
+class PatientRegistrationForm(KenyanPhoneFormMixin, UserCreationForm):
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
@@ -61,11 +62,25 @@ class PatientRegistrationForm(UserCreationForm):
     )
     phone = forms.CharField(
         max_length=20,
-        required=False,
+        required=True,
+        help_text='Used for appointment reminders and M-Pesa payments.',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Phone Number'
+            'placeholder': '07XX XXX XXX'
         })
+    )
+    national_id = forms.CharField(
+        label='National ID number',
+        max_length=12,
+        required=False,
+        validators=[validate_national_id],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'National ID (optional)'})
+    )
+    sha_number = forms.CharField(
+        label='SHA member number',
+        max_length=30,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'SHA number (optional)'})
     )
     username = forms.CharField(
         max_length=150,
@@ -124,6 +139,10 @@ class PatientRegistrationForm(UserCreationForm):
                 Column('phone', css_class='col-md-6 mb-3'),
             ),
             Row(
+                Column('national_id', css_class='col-md-6 mb-3'),
+                Column('sha_number', css_class='col-md-6 mb-3'),
+            ),
+            Row(
                 Column('username', css_class='col-md-6 mb-3'),
                 Column('gender', css_class='col-md-6 mb-3'),
             ),
@@ -138,8 +157,19 @@ class PatientRegistrationForm(UserCreationForm):
             )
         )
 
+    def clean_national_id(self):
+        nid = (self.cleaned_data.get('national_id') or '').strip()
+        if nid:
+            from patients.models import Patient
+            if Patient.objects.filter(id_type='national_id', id_number=nid).exists():
+                raise forms.ValidationError('A patient with this National ID is already registered. Please sign in or visit reception.')
+        return nid
 
-class UserUpdateForm(forms.ModelForm):
+    def clean_sha_number(self):
+        return (self.cleaned_data.get('sha_number') or '').strip().upper()
+
+
+class UserUpdateForm(KenyanPhoneFormMixin, forms.ModelForm):
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
@@ -168,7 +198,7 @@ class UserUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Phone Number'
+            'placeholder': '07XX XXX XXX'
         })
     )
     date_of_birth = forms.DateField(

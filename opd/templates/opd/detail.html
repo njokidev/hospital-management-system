@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 
-{% block title %}OPD Visit {{ opd_visit.opd_number }} - MEDCARE{% endblock %}
+{% block title %}OPD Visit {{ opd_visit.opd_number }} - {% hospital "short_name" %}{% endblock %}
 
 {% block content %}
 <div class="row">

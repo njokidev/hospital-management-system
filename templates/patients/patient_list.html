@@ -10,15 +10,17 @@
     <div class="card-body">
         <table class="table table-hover datatable" id="patientTable">
             <thead>
-                <tr><th>Patient ID</th><th>Name</th><th>Phone</th><th>Blood Group</th><th>Insurance</th><th>Created</th><th>Actions</th></tr>
+                <tr><th>Patient ID</th><th>Name</th><th>ID No.</th><th>SHA No.</th><th>Phone</th><th>County</th><th>Insurance</th><th>Created</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 {% for patient in patients %}
                 <tr>
                     <td>{{ patient.patient_id }}</td>
                     <td>{{ patient.user.get_full_name|default:patient.user.username }}</td>
-                    <td>{{ patient.phone }}</td>
-                    <td>{{ patient.blood_group|default:"-" }}</td>
+                    <td>{{ patient.id_number|default:"-" }}</td>
+                    <td>{{ patient.sha_number|default:"-" }}</td>
+                    <td>{{ patient.user.phone|ke_phone|default:"-" }}</td>
+                    <td>{{ patient.county|default:"-" }}</td>
                     <td>{% if patient.insurances.first %}{{ patient.insurances.first.plan.name }}{% elif patient.insurance_provider %}{{ patient.insurance_provider.name }}{% else %}-{% endif %}</td>
                     <td>{{ patient.created_at|date:"d M Y" }}</td>
                     <td>
@@ -28,7 +30,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted py-4">No patients found</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-4">No patients found</td></tr>
                 {% endfor %}
             </tbody>
         </table>
