@@ -10,6 +10,7 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
 from datetime import timedelta
+from django.conf import settings
 from django.utils import timezone
 
 from .models import (
@@ -267,7 +268,7 @@ class DispenseView(LoginRequiredMixin, PharmacistRequiredMixin, CreateView):
         prescription.is_dispensed = True
         prescription.save()
 
-        messages.success(self.request, f'Medicine dispensed successfully. Total cost: ${total_cost}')
+        messages.success(self.request, f'Medicine dispensed successfully. Total cost: {settings.CURRENCY_SYMBOL} {total_cost:,.2f}')
         return redirect(self.success_url)
 
 

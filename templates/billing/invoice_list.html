@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Invoices - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Invoices - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-receipt"></i> Invoices</h4>
@@ -31,9 +31,9 @@
                         <th>#</th>
                         <th>Invoice #</th>
                         <th>Patient</th>
-                        <th>Total (৳)</th>
-                        <th>Paid (৳)</th>
-                        <th>Due (৳)</th>
+                        <th>Total ({% currency %})</th>
+                        <th>Paid ({% currency %})</th>
+                        <th>Due ({% currency %})</th>
                         <th>Status</th>
                         <th>Date</th>
                         <th>Actions</th>
@@ -45,9 +45,9 @@
                         <td>{{ forloop.counter }}</td>
                         <td><strong>{{ inv.invoice_number }}</strong></td>
                         <td>{{ inv.patient.full_name|default:inv.patient }}</td>
-                        <td>{{ inv.total_amount|floatformat:2 }}</td>
-                        <td class="text-success">{{ inv.paid_amount|floatformat:2 }}</td>
-                        <td class="{% if inv.due_amount > 0 %}text-danger fw-bold{% endif %}">{{ inv.due_amount|floatformat:2 }}</td>
+                        <td>{{ inv.total_amount|floatformat:"2g" }}</td>
+                        <td class="text-success">{{ inv.paid_amount|floatformat:"2g" }}</td>
+                        <td class="{% if inv.due_amount > 0 %}text-danger fw-bold{% endif %}">{{ inv.due_amount|floatformat:"2g" }}</td>
                         <td>
                             {% if inv.status == 'Paid' %}
                             <span class="badge bg-success">Paid</span>

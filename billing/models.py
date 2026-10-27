@@ -49,6 +49,20 @@ class Invoice(models.Model):
     def is_fully_paid(self):
         return self.paid_amount >= self.net_amount
 
+    def update_status(self):
+        """Set Paid/Partial after a payment has been recorded."""
+        if self.status == 'Cancelled':
+            return
+        if self.is_fully_paid:
+            new = 'Paid'
+        elif self.paid_amount > 0:
+            new = 'Partial'
+        else:
+            new = 'Pending'
+        if new != self.status:
+            self.status = new
+            self.save()
+
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
@@ -72,17 +86,25 @@ class InvoiceItem(models.Model):
 
 class Payment(models.Model):
     PAYMENT_METHOD_CHOICES = [
+        ('M-Pesa', 'M-Pesa'),
         ('Cash', 'Cash'),
-        ('Card', 'Card'),
-        ('Bank Transfer', 'Bank Transfer'),
-        ('Mobile Banking', 'Mobile Banking'),
-        ('Insurance', 'Insurance'),
+        ('Airtel Money', 'Airtel Money'),
+        ('Card', 'Card (Visa / Mastercard)'),
+        ('Bank Transfer', 'Bank Transfer / EFT / RTGS'),
+        ('Cheque', 'Cheque'),
+        ('SHA', 'SHA (Social Health Authority)'),
+        ('Insurance', 'Private Insurance'),
     ]
+    MOBILE_MONEY_METHODS = ('M-Pesa', 'Airtel Money')
 
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='Cash')
-    transaction_id = models.CharField(max_length=100, blank=True)
+    transaction_id = models.CharField(
+        'Transaction / reference code', max_length=100, blank=True,
+        help_text='M-Pesa code (e.g. SJK4H7XY2Q), bank reference, cheque no. or SHA claim number',
+    )
+    payer_phone = models.CharField('Payer phone', max_length=20, blank=True)
     received_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='received_payments')
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -136,3 +158,42 @@ class PaymentReceipt(models.Model):
             else:
                 self.receipt_number = 'REC-000001'
         super().save(*args, **kwargs)
+
+
+class MpesaTransaction(models.Model):
+    """An M-Pesa STK Push (Lipa Na M-Pesa Online) request and its outcome."""
+
+    STATUS_CHOICES = [
+        ('Pending', 'Awaiting customer'),
+        ('Success', 'Successful'),
+        ('Failed', 'Failed'),
+        ('Cancelled', 'Cancelled by customer'),
+        ('Timeout', 'Timed out'),
+    ]
+    # Daraja ResultCode values worth naming
+    RESULT_CANCELLED = 1032
+    RESULT_TIMEOUT = 1037
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='mpesa_transactions')
+    phone = models.CharField(max_length=15, help_text='2547XXXXXXXX')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    merchant_request_id = models.CharField(max_length=100, blank=True)
+    checkout_request_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
+    result_code = models.IntegerField(null=True, blank=True)
+    result_desc = models.CharField(max_length=255, blank=True)
+    mpesa_receipt_number = models.CharField(max_length=20, blank=True, db_index=True)
+    transaction_date = models.DateTimeField(null=True, blank=True)
+    payment = models.OneToOneField(Payment, on_delete=models.SET_NULL, null=True, blank=True, related_name='mpesa_transaction')
+    initiated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='mpesa_requests')
+    raw_callback = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'M-Pesa Transaction'
+        verbose_name_plural = 'M-Pesa Transactions'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.checkout_request_id} - {self.invoice.invoice_number} ({self.status})"

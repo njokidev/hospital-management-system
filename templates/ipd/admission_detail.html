@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admission {{ admission.admission_number }} - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Admission {{ admission.admission_number }} - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-person-workspace"></i> Admission {{ admission.admission_number }}</h4>

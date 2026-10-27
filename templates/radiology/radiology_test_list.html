@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Radiology Tests - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Radiology Tests - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-camera"></i> Radiology Tests</h4>
@@ -15,7 +15,7 @@
                         <th>Test Name</th>
                         <th>Code</th>
                         <th>Category</th>
-                        <th>Price (৳)</th>
+                        <th>Price ({% currency %})</th>
                         <th>Modality</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -28,7 +28,7 @@
                         <td><strong>{{ test.name }}</strong></td>
                         <td><code>{{ test.code }}</code></td>
                         <td><span class="badge bg-info">{{ test.category|default:"-" }}</span></td>
-                        <td>{{ test.price|floatformat:2 }}</td>
+                        <td>{{ test.price|floatformat:"2g" }}</td>
                         <td>{{ test.modality|default:"-" }}</td>
                         <td>
                             {% if test.is_active %}

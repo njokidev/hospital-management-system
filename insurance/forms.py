@@ -1,10 +1,11 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Field, Div, HTML
+from core.kenya import KenyanPhoneFormMixin
 from .models import InsuranceProvider, InsurancePlan, PatientInsurance
 
 
-class InsuranceProviderForm(forms.ModelForm):
+class InsuranceProviderForm(KenyanPhoneFormMixin, forms.ModelForm):
     class Meta:
         model = InsuranceProvider
         fields = ['name', 'contact_person', 'phone', 'email', 'address', 'is_active']

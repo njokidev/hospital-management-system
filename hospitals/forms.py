@@ -1,13 +1,14 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
+from core.kenya import KenyanPhoneFormMixin
 from .models import Branch
 
 
-class BranchForm(forms.ModelForm):
+class BranchForm(KenyanPhoneFormMixin, forms.ModelForm):
     class Meta:
         model = Branch
-        fields = ['name', 'address', 'phone', 'is_main_branch', 'is_active']
+        fields = ['name', 'address', 'county', 'phone', 'mfl_code', 'keph_level', 'sha_accredited', 'is_main_branch', 'is_active']
         widgets = {
             'address': forms.Textarea(attrs={'rows': 3}),
         }
@@ -21,6 +22,12 @@ class BranchForm(forms.ModelForm):
                 Column('phone', css_class='col-md-6'),
             ),
             'address',
+            Row(
+                Column('county', css_class='col-md-4'),
+                Column('mfl_code', css_class='col-md-4'),
+                Column('keph_level', css_class='col-md-4'),
+            ),
+            'sha_accredited',
             Row(
                 Column('is_main_branch', css_class='col-md-6'),
                 Column('is_active', css_class='col-md-6'),

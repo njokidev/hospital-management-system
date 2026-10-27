@@ -1,3 +1,14 @@
+import json
+import logging
+from decimal import Decimal, ROUND_CEILING
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.utils.crypto import constant_time_compare
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
@@ -5,14 +16,16 @@ from django.contrib import messages
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from django.db.models import Q, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import Invoice, InvoiceItem, Payment, PaymentReceipt
+from .models import Invoice, InvoiceItem, Payment, PaymentReceipt, MpesaTransaction
 from .forms import InvoiceForm, InvoiceItemForm, PaymentForm, InvoiceFilterForm
 from core.mixins import AccountantRequiredMixin, PatientOrAccountantRequiredMixin, BillingViewMixin
+from core.kenya import mpesa_msisdn
+from . import mpesa
 
 
 class InvoiceListView(LoginRequiredMixin, BillingViewMixin, ListView):
@@ -99,6 +112,9 @@ class InvoiceDetailView(LoginRequiredMixin, PatientOrAccountantRequiredMixin, De
         context['payments'] = self.object.payments.all()
         context['item_form'] = InvoiceItemForm()
         context['payment_form'] = PaymentForm()
+        context['mpesa_transactions'] = self.object.mpesa_transactions.all()[:5]
+        context['mpesa_ready'] = mpesa.is_configured()
+        context['can_pay'] = _can_pay_invoice(self.request.user, self.object)
         return context
 
 
@@ -150,12 +166,8 @@ def payment_create_view(request, invoice_id):
             payment.received_by = request.user
             payment.save()
             PaymentReceipt.objects.create(payment=payment)
-            if invoice.is_fully_paid:
-                invoice.status = 'Paid'
-                invoice.save()
-            elif invoice.paid_amount > 0:
-                invoice.status = 'Partial'
-                invoice.save()
+            invoice.refresh_from_db()
+            invoice.update_status()
             messages.success(request, 'Payment recorded successfully.')
             return redirect('billing:invoice_detail', pk=invoice.pk)
     else:
@@ -279,3 +291,123 @@ def delete_invoice_item_view(request, item_id):
     invoice.save()
     messages.success(request, 'Item removed from invoice.')
     return redirect('billing:invoice_detail', pk=invoice.pk)
+
+
+# ─────────────────────────────── M-Pesa (STK Push) ───────────────────────────────
+mpesa_logger = logging.getLogger('billing.mpesa')
+
+
+def _can_pay_invoice(user, invoice):
+    if user.is_superuser or user.roles.filter(name__in=['Accountant', 'Receptionist', 'Hospital Admin']).exists():
+        return True
+    return invoice.patient.user_id == user.id
+
+
+@login_required
+@require_POST
+def mpesa_stk_push_view(request, invoice_id):
+    """Send an M-Pesa payment prompt to the payer's phone for this invoice."""
+    invoice = get_object_or_404(Invoice.objects.select_related('patient__user'), pk=invoice_id)
+    if not _can_pay_invoice(request.user, invoice):
+        messages.error(request, 'You do not have permission to pay this invoice.')
+        return redirect('dashboard')
+    if invoice.due_amount <= 0:
+        messages.info(request, 'This invoice has no outstanding balance.')
+        return redirect('billing:invoice_detail', pk=invoice.pk)
+
+    try:
+        msisdn = mpesa_msisdn(request.POST.get('phone', ''))
+        # M-Pesa only accepts whole shillings; round the balance up so the invoice clears
+        amount = Decimal(request.POST.get('amount') or invoice.due_amount).quantize(Decimal('1'), rounding=ROUND_CEILING)
+        if amount < 1 or amount > invoice.due_amount.quantize(Decimal('1'), rounding=ROUND_CEILING):
+            raise ValidationError('Amount must be between KSh 1 and the outstanding balance.')
+        data = mpesa.stk_push(msisdn, amount, invoice.invoice_number, 'Hospital bill')
+    except ValidationError as e:
+        messages.error(request, ' '.join(e.messages))
+        return redirect('billing:invoice_detail', pk=invoice.pk)
+    except (ArithmeticError, ValueError):
+        messages.error(request, 'Enter a valid amount.')
+        return redirect('billing:invoice_detail', pk=invoice.pk)
+    except mpesa.MpesaError as e:
+        messages.error(request, f'M-Pesa: {e}')
+        return redirect('billing:invoice_detail', pk=invoice.pk)
+
+    MpesaTransaction.objects.create(
+        invoice=invoice,
+        phone=msisdn,
+        amount=amount,
+        merchant_request_id=data.get('MerchantRequestID', ''),
+        checkout_request_id=data['CheckoutRequestID'],
+        initiated_by=request.user,
+    )
+    messages.success(request, f'M-Pesa prompt sent to {msisdn}. Ask the payer to enter their M-Pesa PIN.')
+    return redirect('billing:invoice_detail', pk=invoice.pk)
+
+
+@csrf_exempt
+@require_POST
+def mpesa_callback_view(request, token):
+    """Receives the STK Push result from Safaricom. Always acknowledges with 200."""
+    ack = JsonResponse({'ResultCode': 0, 'ResultDesc': 'Accepted'})
+    if not constant_time_compare(token, settings.MPESA_CALLBACK_TOKEN):
+        mpesa_logger.warning('M-Pesa callback with bad token from %s', request.META.get('REMOTE_ADDR'))
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Rejected'}, status=403)
+    try:
+        body = json.loads(request.body)
+        result = mpesa.parse_callback(body)
+    except (ValueError, KeyError, TypeError):
+        mpesa_logger.warning('Malformed M-Pesa callback: %r', request.body[:500])
+        return ack
+
+    with transaction.atomic():
+        txn = (MpesaTransaction.objects.select_for_update()
+               .select_related('invoice').filter(checkout_request_id=result['checkout_request_id']).first())
+        if txn is None:
+            mpesa_logger.warning('M-Pesa callback for unknown CheckoutRequestID %s', result['checkout_request_id'])
+            return ack
+        if txn.status != 'Pending':
+            return ack  # duplicate delivery – already processed
+
+        txn.result_code = result['result_code']
+        txn.result_desc = result['result_desc'][:255]
+        txn.raw_callback = body
+        if result['result_code'] == 0:
+            txn.status = 'Success'
+            txn.mpesa_receipt_number = result['receipt_number']
+            txn.transaction_date = result['transaction_date']
+            paid = Decimal(str(result['amount'])) if result['amount'] is not None else txn.amount
+            payment = Payment.objects.create(
+                invoice=txn.invoice,
+                amount=paid,
+                payment_method='M-Pesa',
+                transaction_id=result['receipt_number'],
+                payer_phone='+' + (result['phone'] or txn.phone),
+                received_by=txn.initiated_by,
+                notes='Lipa Na M-Pesa (STK Push)',
+            )
+            PaymentReceipt.objects.create(payment=payment)
+            txn.payment = payment
+            txn.invoice.refresh_from_db()
+            txn.invoice.update_status()
+        elif result['result_code'] == MpesaTransaction.RESULT_CANCELLED:
+            txn.status = 'Cancelled'
+        elif result['result_code'] == MpesaTransaction.RESULT_TIMEOUT:
+            txn.status = 'Timeout'
+        else:
+            txn.status = 'Failed'
+        txn.save()
+    return ack
+
+
+@login_required
+def mpesa_status_view(request, pk):
+    """Polled by the invoice page while a prompt is pending."""
+    txn = get_object_or_404(MpesaTransaction.objects.select_related('invoice__patient'), pk=pk)
+    if not _can_pay_invoice(request.user, txn.invoice):
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    return JsonResponse({
+        'status': txn.status,
+        'status_display': txn.get_status_display(),
+        'receipt': txn.mpesa_receipt_number,
+        'message': txn.result_desc,
+    })

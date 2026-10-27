@@ -57,7 +57,13 @@ def register_view(request):
             )
             user.roles.add(patient_role)
             from patients.models import Patient
-            Patient.objects.create(user=user)
+            national_id = form.cleaned_data.get('national_id', '')
+            Patient.objects.create(
+                user=user,
+                id_type='national_id' if national_id else 'none',
+                id_number=national_id,
+                sha_number=form.cleaned_data.get('sha_number', ''),
+            )
             login(request, user)
             messages.success(request, 'Registration successful! Welcome to Medcare Hospital.')
             return redirect('dashboard')

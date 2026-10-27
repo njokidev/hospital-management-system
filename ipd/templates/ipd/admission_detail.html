@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 
-{% block title %}Admission {{ admission.patient }} - MEDCARE{% endblock %}
+{% block title %}Admission {{ admission.patient }} - {% hospital "short_name" %}{% endblock %}
 
 {% block content %}
 <div class="row">

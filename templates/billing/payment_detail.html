@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Payment Receipt - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Payment Receipt - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-receipt-cutoff"></i> Payment Receipt</h4>
@@ -17,7 +17,7 @@
                     <tr><th>Receipt #</th><td>{{ payment.receipt_number }}</td></tr>
                     <tr><th>Invoice #</th><td><a href="{% url 'billing:invoice_detail' payment.invoice.pk %}">{{ payment.invoice.invoice_number }}</a></td></tr>
                     <tr><th>Patient</th><td>{{ payment.invoice.patient.full_name }}</td></tr>
-                    <tr><th>Amount</th><td class="fs-4 fw-bold text-success">৳{{ payment.amount|floatformat:2 }}</td></tr>
+                    <tr><th>Amount</th><td class="fs-4 fw-bold text-success">{{ payment.amount|ksh:2 }}</td></tr>
                     <tr><th>Method</th><td>{{ payment.get_payment_method_display }}</td></tr>
                     {% if payment.transaction_id %}<tr><th>Reference</th><td>{{ payment.transaction_id }}</td></tr>{% endif %}
                     <tr><th>Date</th><td>{{ payment.created_at|date:"d-M-Y H:i" }}</td></tr>

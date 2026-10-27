@@ -3,6 +3,8 @@ from datetime import date, time, timedelta, datetime
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
+
+from core import seed_kenya as ke
 from django.db import transaction
 from django.utils import timezone
 
@@ -84,9 +86,9 @@ class Command(BaseCommand):
 
         # 2. Superuser
         admin = User.objects.create_superuser(
-            username='admin', email='admin@medcare.com', password='admin123',
+            username='admin', email='admin@medcare.co.ke', password='admin123',
             first_name='System', last_name='Administrator',
-            phone='+8801700000000', gender='Male',
+            phone='+254700000000', gender='Male',
         )
         admin.roles.add(roles['Super Admin'])
         self.stdout.write('  Admin user created.')
@@ -94,8 +96,8 @@ class Command(BaseCommand):
         # 3. Branch
         branch = Branch.objects.create(
             name='Main Branch',
-            address='45 Medical Road, Gulshan-2, Dhaka 1212',
-            phone='+88025500100', is_main_branch=True,
+            address='45 Medical Road, Westlands, Nairobi',
+            phone='+254725500100', is_main_branch=True,
         )
         self.stdout.write('  Branch created.')
 
@@ -120,8 +122,8 @@ class Command(BaseCommand):
         for name, desc in dept_data:
             departments[name] = Department.objects.create(
                 name=name, branch=branch,
-                phone=f'+88025500{random.randint(100,999)}',
-                email=f'{name.lower().replace(" ",".")}@medcare.com',
+                phone=ke.landline(),
+                email=f'{name.lower().replace(" ",".")}@medcare.co.ke',
             )
         self.stdout.write('  Departments created.')
 
@@ -148,30 +150,30 @@ class Command(BaseCommand):
 
         # 6. Doctors
         doctor_data = [
-            ('Kamal', 'Rahman', 'Male', 'Cardiology', 'Interventional Cardiology', 55000, 15, 2000),
-            ('Fatema', 'Begum', 'Female', 'Neurology', 'Stroke Medicine', 60000, 12, 2500),
-            ('Ahmed', 'Hossain', 'Male', 'Orthopedics', 'Spine Surgery', 50000, 10, 1800),
-            ('Nusrat', 'Jahan', 'Female', 'Pediatrics', 'Neonatology', 45000, 8, 1500),
-            ('Karim', 'Miah', 'Male', 'General Medicine', 'Internal Medicine', 40000, 5, 1000),
-            ('Sabrina', 'Akter', 'Female', 'Surgery', 'General Surgery', 55000, 7, 2200),
-            ('Tariq', 'Islam', 'Male', 'Cardiology', 'Electrophysiology', 48000, 6, 1800),
-            ('Farhana', 'Chowdhury', 'Female', 'Neurology', 'Epilepsy', 52000, 9, 2000),
-            ('Zahid', 'Hasan', 'Male', 'Orthopedics', 'Joint Replacement', 47000, 4, 1600),
-            ('Ruma', 'Afroz', 'Female', 'General Medicine', 'Family Medicine', 38000, 3, 1000),
-            ('David', 'Bhuiyan', 'Male', 'Pediatrics', 'Child Development', 42000, 6, 1400),
-            ('Tanim', 'Mahmud', 'Male', 'Neurology', 'Neuromuscular Medicine', 51000, 8, 1900),
-            ('Rahim', 'Rahman', 'Male', 'Cardiology', 'Cardiac Surgery', 65000, 18, 3000),
-            ('Naim', 'Chowdhury', 'Male', 'Oncology', 'Medical Oncology', 53000, 11, 2100),
-            ('Jesmin', 'ara', 'Female', 'Dermatology', 'Cosmetic Dermatology', 35000, 4, 1200),
+            ('Abdi', 'Abdullahi', 'Male', 'Cardiology', 'Interventional Cardiology', 55000, 15, 2000),
+            ('Jepkosgei', 'Odhiambo', 'Female', 'Neurology', 'Stroke Medicine', 60000, 12, 2500),
+            ('Mwangi', 'Omondi', 'Male', 'Orthopedics', 'Spine Surgery', 50000, 10, 1800),
+            ('Zawadi', 'Gitau', 'Female', 'Pediatrics', 'Neonatology', 45000, 8, 1500),
+            ('Juma', 'Kirui', 'Male', 'General Medicine', 'Internal Medicine', 40000, 5, 1000),
+            ('Kerubo', 'Kariuki', 'Female', 'Surgery', 'General Surgery', 55000, 7, 2200),
+            ('Moses', 'Kimani', 'Male', 'Cardiology', 'Electrophysiology', 48000, 6, 1800),
+            ('Achieng', 'Kiprotich', 'Female', 'Neurology', 'Epilepsy', 52000, 9, 2000),
+            ('Elijah', 'Barasa', 'Male', 'Orthopedics', 'Joint Replacement', 47000, 4, 1600),
+            ('Kemunto', 'Kamau', 'Female', 'General Medicine', 'Family Medicine', 38000, 3, 1000),
+            ('David', 'Ochieng', 'Male', 'Pediatrics', 'Child Development', 42000, 6, 1400),
+            ('Patrick', 'Kiplagat', 'Male', 'Neurology', 'Neuromuscular Medicine', 51000, 8, 1900),
+            ('Gitonga', 'Abdullahi', 'Male', 'Cardiology', 'Cardiac Surgery', 65000, 18, 3000),
+            ('Kioko', 'Kiprotich', 'Male', 'Oncology', 'Medical Oncology', 53000, 11, 2100),
+            ('Muthoni', 'ara', 'Female', 'Dermatology', 'Cosmetic Dermatology', 35000, 4, 1200),
         ]
         doctors = []
         for i, (first, last, gender, dept, spec, salary, exp, fee) in enumerate(doctor_data):
             user = User.objects.create_user(
                 username=f'doctor.{first.lower()}.{last.lower()}',
-                email=f'{first.lower()}.{last.lower()}@medcare.com',
+                email=f'{first.lower()}.{last.lower()}@medcare.co.ke',
                 password='doctor123',
                 first_name=first, last_name=last,
-                phone=f'+88017{10000000+i}',
+                phone=ke.phone(),
                 gender=gender, date_of_birth=date(1970+i, 1, 15),
             )
             user.roles.add(roles['Doctor'])
@@ -210,17 +212,17 @@ class Command(BaseCommand):
 
         # 7. Nurses
         nurse_data = [
-            ('Taslima', 'Khatun'), ('Salma', 'Begum'), ('Roksana', 'Islam'),
-            ('Jesmin', 'Akter'), ('Nargis', 'Begum'),
+            ('Chepkoech', 'Nyambura'), ('Nekesa', 'Odhiambo'), ('Moraa', 'Kimani'),
+            ('Muthoni', 'Kariuki'), ('Lilian', 'Odhiambo'),
         ]
         nurse_users = []
         for first, last in nurse_data:
             user = User.objects.create_user(
                 username=f'nurse.{first.lower()}.{last.lower()}',
-                email=f'{first.lower()}.{last.lower()}@medcare.com',
+                email=f'{first.lower()}.{last.lower()}@medcare.co.ke',
                 password='nurse123',
                 first_name=first, last_name=last,
-                phone=f'+88018{random.randint(10000000,99999999)}',
+                phone=ke.phone(),
                 gender='Female', date_of_birth=date(1985, 5, 10),
             )
             user.roles.add(roles['Nurse'])
@@ -234,14 +236,14 @@ class Command(BaseCommand):
 
         # 8. Pharmacists
         pharmacist_users = []
-        for first, last in [('Masud', 'Rana'), ('Kamrun', 'Nesa')]:
+        for first, last in [('Kimutai', 'Noor'), ('Faith', 'Nzioka')]:
             user = User.objects.create_user(
                 username=f'pharm.{first.lower()}.{last.lower()}',
-                email=f'{first.lower()}.{last.lower()}@medcare.com',
+                email=f'{first.lower()}.{last.lower()}@medcare.co.ke',
                 password='pharm123',
                 first_name=first, last_name=last,
-                phone=f'+88019{random.randint(10000000,99999999)}',
-                gender='Male' if first == 'Masud' else 'Female',
+                phone=ke.phone(),
+                gender='Male' if first == 'Kimutai' else 'Female',
             )
             user.roles.add(roles['Pharmacist'])
             Employee.objects.create(
@@ -254,14 +256,14 @@ class Command(BaseCommand):
 
         # 9. Lab Technicians
         lab_tech_users = []
-        for first, last in [('Shafiq', 'Uddin'), ('Maliha', 'Perveen')]:
+        for first, last in [('Swaleh', 'Keter'), ('Esther', 'Were')]:
             user = User.objects.create_user(
                 username=f'lab.{first.lower()}.{last.lower()}',
-                email=f'{first.lower()}.{last.lower()}@medcare.com',
+                email=f'{first.lower()}.{last.lower()}@medcare.co.ke',
                 password='lab123',
                 first_name=first, last_name=last,
-                phone=f'+88016{random.randint(10000000,99999999)}',
-                gender='Male' if first == 'Shafiq' else 'Female',
+                phone=ke.phone(),
+                gender='Male' if first == 'Swaleh' else 'Female',
             )
             user.roles.add(roles['Lab Technician'])
             Employee.objects.create(
@@ -274,9 +276,9 @@ class Command(BaseCommand):
 
         # 10. Accountant
         acc_user = User.objects.create_user(
-            username='accountant.tanim', email='tanim@medcare.com', password='acc123',
-            first_name='Tanim', last_name='Hossain',
-            phone='+8801730593240', gender='Male',
+            username='accountant.tanim', email='tanim@medcare.co.ke', password='acc123',
+            first_name='Patrick', last_name='Omondi',
+            phone='+254730593240', gender='Male',
         )
         acc_user.roles.add(roles['Accountant'])
         Employee.objects.create(
@@ -287,9 +289,9 @@ class Command(BaseCommand):
 
         # 11. HR Manager
         hr_user = User.objects.create_user(
-            username='hr.hasan', email='hasan@medcare.com', password='hr123',
-            first_name='Rafiq', last_name='Hasan',
-            phone='+8801555000000', gender='Male',
+            username='hr.hasan', email='hasan@medcare.co.ke', password='hr123',
+            first_name='Muli', last_name='Barasa',
+            phone='+254755000000', gender='Male',
         )
         hr_user.roles.add(roles['HR Manager'])
         Employee.objects.create(
@@ -303,16 +305,16 @@ class Command(BaseCommand):
 
         # 12. Insurance
         ip1 = InsuranceProvider.objects.create(
-            name='Green Delta Insurance', contact_person='Mr. Alam',
-            phone='+88029876543', email='info@greendelta.com',
+            name='Jubilee Health Insurance', contact_person='Wanjala',
+            phone='+254729876543', email='info@jubilee.example.com',
         )
         ip2 = InsuranceProvider.objects.create(
-            name='IFIC Insurance', contact_person='Ms. Nisa',
-            phone='+88029876000', email='info@ific.com',
+            name='AAR Insurance Kenya', contact_person='Nisa',
+            phone='+254729876000', email='info@aar.example.com',
         )
         ip3 = InsuranceProvider.objects.create(
-            name='Prabashi Insurance', contact_person='Mr. Karim',
-            phone='+88029876111', email='info@prabashi.com',
+            name='Britam', contact_person='Juma',
+            phone='+254729876111', email='info@britam.example.com',
         )
         plan1 = InsurancePlan.objects.create(
             provider=ip1, name='Gold Plan', coverage_percentage=70,
@@ -330,56 +332,56 @@ class Command(BaseCommand):
 
         # 13. Patients
         patient_data = [
-            ('Zara', 'Ghosh', 'Female', 'A+', 24),
-            ('Yasmin', 'Haque', 'Female', 'B+', 28),
-            ('Yasmin', 'Ali', 'Female', 'O-', 35),
-            ('William', 'Miah', 'Male', 'AB+', 45),
-            ('Varsha', 'Sarker', 'Female', 'A-', 30),
-            ('Varsha', 'Mahmud', 'Female', 'B-', 22),
-            ('Tahsin', 'Reza', 'Male', 'O+', 50),
-            ('Taslima', 'Mazumder', 'Female', 'A+', 27),
-            ('Tahsin', 'Mahmud', 'Male', 'B+', 33),
-            ('Tanim', 'Miah', 'Male', 'AB-', 40),
-            ('Sakib', 'Hasan', 'Male', 'O+', 29),
-            ('Nafisa', 'Islam', 'Female', 'A+', 31),
-            ('Arif', 'Kabir', 'Male', 'B-', 48),
-            ('Sabrina', 'Mim', 'Female', 'O+', 26),
-            ('Rakib', 'Uddin', 'Male', 'AB+', 38),
-            ('Nargis', 'Das', 'Female', 'B+', 32),
-            ('Harper', 'Ghosh', 'Male', 'A+', 41),
-            ('Elizabeth', 'Khan', 'Female', 'O+', 55),
-            ('Lily', 'Begum', 'Female', 'AB+', 23),
-            ('Chloe', 'Haque', 'Female', 'O+', 29),
-            ('Farida', 'Akhter', 'Female', 'A-', 44),
-            ('Rafiq', 'Uddin', 'Male', 'B+', 37),
-            ('Sumaiya', 'Khatun', 'Female', 'O-', 25),
-            ('Mizan', 'Rahman', 'Male', 'A+', 52),
-            ('Tasnim', 'Jahan', 'Female', 'B-', 30),
-            ('Ashraf', 'Hossain', 'Male', 'AB+', 47),
-            ('Nusrat', 'Zaman', 'Female', 'A+', 22),
-            ('Kamrul', 'Islam', 'Male', 'O+', 39),
-            ('Sharmin', 'Reza', 'Female', 'B+', 34),
-            ('Badrul', 'Alam', 'Male', 'A-', 58),
-            ('Fariha', 'Parveen', 'Female', 'AB-', 28),
-            ('Tanvir', 'Hossain', 'Male', 'B+', 42),
-            ('Maliha', 'Sultana', 'Female', 'O+', 31),
-            ('Imran', 'Khan', 'Male', 'A+', 46),
-            ('Nazma', 'Begum', 'Female', 'B-', 36),
-            ('Jahangir', 'Alam', 'Male', 'O-', 53),
-            ('Roksana', 'Miah', 'Female', 'A+', 27),
-            ('Shahriar', 'Kabir', 'Male', 'AB+', 40),
-            ('Afia', 'Chowdhury', 'Female', 'B+', 24),
-            ('Masum', 'Billah', 'Male', 'O+', 49),
-            ('Tahmeed', 'Ahmed', 'Female', 'A-', 33),
-            ('Zubair', 'Hasan', 'Male', 'B-', 41),
-            ('Sumona', 'Akter', 'Female', 'AB-', 29),
-            ('Rakibul', 'Hoque', 'Male', 'O+', 38),
-            ('Nabila', 'Yasmin', 'Female', 'A+', 26),
-            ('Mehedi', 'Hassan', 'Male', 'B+', 44),
-            ('Shirin', 'Jahan', 'Female', 'A+', 32),
-            ('Anisur', 'Rahman', 'Male', 'O-', 56),
-            ('Humaira', 'Begum', 'Female', 'B+', 23),
-            ('Sohel', 'Rana', 'Male', 'AB+', 35),
+            ('Ndanu', 'Cheruiyot', 'Female', 'A+', 24),
+            ('Mwende', 'Wekesa', 'Female', 'B+', 28),
+            ('Mwende', 'Ali', 'Female', 'O-', 35),
+            ('William', 'Kirui', 'Male', 'AB+', 45),
+            ('Kagendo', 'Maina', 'Female', 'A-', 30),
+            ('Kagendo', 'Kiplagat', 'Female', 'B-', 22),
+            ('Eric', 'Wambua', 'Male', 'O+', 50),
+            ('Chepkoech', 'Langat', 'Female', 'A+', 27),
+            ('Eric', 'Kiplagat', 'Male', 'B+', 33),
+            ('Patrick', 'Kirui', 'Male', 'AB-', 40),
+            ('Omar', 'Barasa', 'Male', 'O+', 29),
+            ('Caroline', 'Kimani', 'Female', 'A+', 31),
+            ('Collins', 'Muriuki', 'Male', 'B-', 48),
+            ('Kerubo', 'Korir', 'Female', 'O+', 26),
+            ('Mugo', 'Keter', 'Male', 'AB+', 38),
+            ('Lilian', 'Koech', 'Female', 'B+', 32),
+            ('Harper', 'Cheruiyot', 'Male', 'A+', 41),
+            ('Elizabeth', 'Ndungu', 'Female', 'O+', 55),
+            ('Lily', 'Odhiambo', 'Female', 'AB+', 23),
+            ('Chloe', 'Wekesa', 'Female', 'O+', 29),
+            ('Atieno', 'Njoroge', 'Female', 'A-', 44),
+            ('Muli', 'Keter', 'Male', 'B+', 37),
+            ('Anyango', 'Nyambura', 'Female', 'O-', 25),
+            ('Okoth', 'Abdullahi', 'Male', 'A+', 52),
+            ('Kawira', 'Gitau', 'Female', 'B-', 30),
+            ('Victor', 'Omondi', 'Male', 'AB+', 47),
+            ('Zawadi', 'Bett', 'Female', 'A+', 22),
+            ('Mohamed', 'Kimani', 'Male', 'O+', 39),
+            ('Awino', 'Wambua', 'Female', 'B+', 34),
+            ('Peter', 'Wanjala', 'Male', 'A-', 58),
+            ('Akinyi', 'Okello', 'Female', 'AB-', 28),
+            ('Francis', 'Omondi', 'Male', 'B+', 42),
+            ('Esther', 'Kinyua', 'Female', 'O+', 31),
+            ('Omondi', 'Ndungu', 'Male', 'A+', 46),
+            ('Fatuma', 'Odhiambo', 'Female', 'B-', 36),
+            ('Kamau', 'Wanjala', 'Male', 'O-', 53),
+            ('Moraa', 'Kirui', 'Female', 'A+', 27),
+            ('Rashid', 'Muriuki', 'Male', 'AB+', 40),
+            ('Wanjiku', 'Kiprotich', 'Female', 'B+', 24),
+            ('Ouma', 'Onyango', 'Male', 'O+', 49),
+            ('Syokau', 'Mwangi', 'Female', 'A-', 33),
+            ('Allan', 'Barasa', 'Male', 'B-', 41),
+            ('Jebet', 'Kariuki', 'Female', 'AB-', 29),
+            ('Waweru', 'Wafula', 'Male', 'O+', 38),
+            ('Purity', 'Mwende', 'Female', 'A+', 26),
+            ('Owino', 'Hassan', 'Male', 'B+', 44),
+            ('Adhiambo', 'Gitau', 'Female', 'A+', 32),
+            ('Dennis', 'Abdullahi', 'Male', 'O-', 56),
+            ('Naliaka', 'Odhiambo', 'Female', 'B+', 23),
+            ('Stephen', 'Noor', 'Male', 'AB+', 35),
         ]
         patients = []
         today = timezone.now().date()
@@ -391,9 +393,9 @@ class Command(BaseCommand):
                 email=f'{first.lower()}.{last.lower()}@email.com',
                 password='patient123',
                 first_name=first, last_name=last,
-                phone=f'+8801{random.randint(300000000,399999999)}',
+                phone=ke.phone(),
                 gender=gender, date_of_birth=date(year, random.randint(1, 12), random.randint(1, 28)),
-                address=f'{random.randint(1,200)} {random.choice(["Road","Lane","Avenue"])} {random.choice(["Gulshan","Banani","Dhanmondi","Mirpur","Uttara"])}, Dhaka',
+                address=f'{random.randint(1,200)} {random.choice(["Road","Lane","Avenue"])} {random.choice(["Westlands","Kilimani","Lavington","Kasarani","Karen"])}, Nairobi',
             )
             user.roles.add(roles['Patient'])
 
@@ -401,7 +403,7 @@ class Command(BaseCommand):
             pat = Patient.objects.create(
                 user=user, blood_group=blood,
                 emergency_contact_name=f'{last} Family',
-                emergency_contact_phone=f'+8801{random.randint(400000000,499999999)}',
+                emergency_contact_phone=ke.phone(),
                 insurance_provider=pat_insurance_plan,
             )
 
@@ -533,11 +535,11 @@ class Command(BaseCommand):
             categories[name] = MedicineCategory.objects.create(name=name)
 
         suppliers_data = [
-            ('Beximco Pharmaceuticals Ltd.', 'Mr. Kabir', '+8801711111111', 'kabir@beximco.com'),
-            ('Square Pharmaceuticals Ltd.', 'Mr. Rahman', '+8801722222222', 'rahman@square.com'),
-            ('Incepta Pharmaceuticals Ltd.', 'Ms. Nesa', '+8801733333333', 'nesa@incepta.com'),
-            ('Renata Limited', 'Mr. Alam', '+8801744444444', 'alam@renata.com'),
-            ('MediSupply Bangladesh', 'Mr. Hossain', '+8801755555555', 'hossain@medisupply.com'),
+            ('Dawa Life Sciences', 'Muriuki', '+254711111111', 'sales@supplier.example.com'),
+            ('Cosmos Ltd', 'Abdullahi', '+254722222222', 'sales@supplier.example.com'),
+            ('Universal Corporation Ltd', 'Nzioka', '+254733333333', 'sales@supplier.example.com'),
+            ('Regal Pharmaceuticals', 'Wanjala', '+254744444444', 'sales@supplier.example.com'),
+            ('KEMSA', 'Omondi', '+254755555555', 'sales@supplier.example.com'),
         ]
         supplier_objs = []
         for name, cp, phone, email in suppliers_data:
@@ -545,26 +547,26 @@ class Command(BaseCommand):
             supplier_objs.append(s)
 
         med_data = [
-            ('Panadol CF', 'Paracetamol+Phenylephrine', 'Tablet', 6.00, 250, 10, 'Beximco Pharmaceuticals Ltd.'),
-            ('Napa 500mg', 'Paracetamol', 'Tablet', 3.50, 500, 50, 'Beximco Pharmaceuticals Ltd.'),
-            ('Napa Extra', 'Paracetamol+ caffeine', 'Tablet', 5.00, 300, 30, 'Beximco Pharmaceuticals Ltd.'),
-            ('Omeprazole 20mg', 'Omeprazole', 'Capsule', 8.00, 350, 40, 'Square Pharmaceuticals Ltd.'),
-            ('Omeprazole', 'Omeprazole', 'Capsule', 6.50, 200, 30, 'Square Pharmaceuticals Ltd.'),
-            ('Metformin 500mg', 'Metformin', 'Tablet', 4.00, 400, 50, 'Incepta Pharmaceuticals Ltd.'),
-            ('Metformin', 'Metformin', 'Tablet', 3.50, 350, 40, 'Incepta Pharmaceuticals Ltd.'),
-            ('Ostocal D3', 'Calcium+Vitamin D3', 'Tablet', 12.00, 400, 30, 'Renata Limited'),
-            ('Montelukast 10mg', 'Montelukast', 'Tablet', 15.00, 200, 25, 'Square Pharmaceuticals Ltd.'),
-            ('Fusidic Cream', 'Fusidic Acid', 'Ointment', 85.00, 120, 20, 'MediSupply Bangladesh'),
-            ('Dolo 650mg', 'Paracetamol', 'Tablet', 4.50, 450, 50, 'Beximco Pharmaceuticals Ltd.'),
-            ('Amoxicillin 500mg', 'Amoxicillin', 'Capsule', 10.00, 300, 40, 'Square Pharmaceuticals Ltd.'),
-            ('Cetirizine 10mg', 'Cetirizine', 'Tablet', 3.00, 400, 50, 'Incepta Pharmaceuticals Ltd.'),
-            ('Azithromycin 500mg', 'Azithromycin', 'Capsule', 18.00, 250, 30, 'Square Pharmaceuticals Ltd.'),
-            ('Salbutamol Inhaler', 'Salbutamol', 'Inhaler', 250.00, 80, 15, 'MediSupply Bangladesh'),
-            ('Diclofenac Gel', 'Diclofenac', 'Ointment', 65.00, 150, 20, 'Renata Limited'),
-            ('Pantoprazole 40mg', 'Pantoprazole', 'Tablet', 12.00, 280, 35, 'Incepta Pharmaceuticals Ltd.'),
-            ('Losartan 50mg', 'Losartan', 'Tablet', 8.50, 320, 40, 'Renata Limited'),
-            ('Atorvastatin 20mg', 'Atorvastatin', 'Tablet', 15.00, 200, 25, 'Square Pharmaceuticals Ltd.'),
-            ('Insulin Glargine', 'Insulin', 'Injection', 350.00, 50, 10, 'MediSupply Bangladesh'),
+            ('Panadol CF', 'Paracetamol+Phenylephrine', 'Tablet', 6.00, 250, 10, 'Dawa Life Sciences'),
+            ('Panadol 500mg', 'Paracetamol', 'Tablet', 3.50, 500, 50, 'Dawa Life Sciences'),
+            ('Panadol Extra', 'Paracetamol+ caffeine', 'Tablet', 5.00, 300, 30, 'Dawa Life Sciences'),
+            ('Omeprazole 20mg', 'Omeprazole', 'Capsule', 8.00, 350, 40, 'Cosmos Ltd'),
+            ('Omeprazole', 'Omeprazole', 'Capsule', 6.50, 200, 30, 'Cosmos Ltd'),
+            ('Metformin 500mg', 'Metformin', 'Tablet', 4.00, 400, 50, 'Universal Corporation Ltd'),
+            ('Metformin', 'Metformin', 'Tablet', 3.50, 350, 40, 'Universal Corporation Ltd'),
+            ('Calcium + Vitamin D3', 'Calcium+Vitamin D3', 'Tablet', 12.00, 400, 30, 'Regal Pharmaceuticals'),
+            ('Montelukast 10mg', 'Montelukast', 'Tablet', 15.00, 200, 25, 'Cosmos Ltd'),
+            ('Fusidic Cream', 'Fusidic Acid', 'Ointment', 85.00, 120, 20, 'KEMSA'),
+            ('Paracetamol 650mg', 'Paracetamol', 'Tablet', 4.50, 450, 50, 'Dawa Life Sciences'),
+            ('Amoxicillin 500mg', 'Amoxicillin', 'Capsule', 10.00, 300, 40, 'Cosmos Ltd'),
+            ('Cetirizine 10mg', 'Cetirizine', 'Tablet', 3.00, 400, 50, 'Universal Corporation Ltd'),
+            ('Azithromycin 500mg', 'Azithromycin', 'Capsule', 18.00, 250, 30, 'Cosmos Ltd'),
+            ('Salbutamol Inhaler', 'Salbutamol', 'Inhaler', 250.00, 80, 15, 'KEMSA'),
+            ('Diclofenac Gel', 'Diclofenac', 'Ointment', 65.00, 150, 20, 'Regal Pharmaceuticals'),
+            ('Pantoprazole 40mg', 'Pantoprazole', 'Tablet', 12.00, 280, 35, 'Universal Corporation Ltd'),
+            ('Losartan 50mg', 'Losartan', 'Tablet', 8.50, 320, 40, 'Regal Pharmaceuticals'),
+            ('Atorvastatin 20mg', 'Atorvastatin', 'Tablet', 15.00, 200, 25, 'Cosmos Ltd'),
+            ('Insulin Glargine', 'Insulin', 'Injection', 350.00, 50, 10, 'KEMSA'),
         ]
         medicines = []
         for name, generic, cat, price, stock, min_stock, supplier_name in med_data:
@@ -743,7 +745,7 @@ class Command(BaseCommand):
                 paid = inv.net_amount if inv.status == 'Paid' else inv.net_amount * Decimal('0.5')
                 Payment.objects.create(
                     invoice=inv, amount=paid,
-                    payment_method=random.choice(['Cash', 'Card', 'Mobile Banking', 'Bank Transfer']),
+                    **ke.payment(),
                     received_by=acc_user,
                 )
         self.stdout.write('  Invoices & Payments created.')
@@ -789,10 +791,10 @@ class Command(BaseCommand):
 
         # 28. Ambulance
         ambulances = [
-            ('DM-AMB-001', 'AC', 'Rafiq Driver', '+8801720000000', 'Hospital'),
-            ('DM-AMB-002', 'ICU', 'Karim Driver', '+8801730000000', 'En route'),
-            ('DM-AMB-003', 'Basic', 'Jamal Driver', '+8801740000000', 'Hospital'),
-            ('DM-AMB-004', 'AC', 'Rahim Driver', '+8801750000000', 'On Call'),
+            ('KDJ 101A', 'AC', 'Muli Driver', '+254720000000', 'Hospital'),
+            ('KDK 202B', 'ICU', 'Juma Driver', '+254730000000', 'En route'),
+            ('KDL 303C', 'Basic', 'Wekesa Driver', '+254740000000', 'Hospital'),
+            ('KDM 404D', 'AC', 'Gitonga Driver', '+254750000000', 'On Call'),
         ]
         amb_objs = []
         for vnum, vtype, dname, dphone, loc in ambulances:
@@ -801,10 +803,10 @@ class Command(BaseCommand):
                 driver_name=dname, driver_phone=dphone, current_location=loc,
             ))
         amb_requests = [
-            ('Emergency Patient 1', '+8801740000001', 'Gulshan-2', 'Medcare Hospital', 'Completed'),
-            ('Emergency Patient 2', '+8801740000002', 'Banani', 'Medcare Hospital', 'In-Transit'),
-            ('Transfer Patient', '+8801740000003', 'Medcare Hospital', 'Square Hospital', 'Dispatched'),
-            ('Emergency Patient 3', '+8801740000004', 'Dhanmondi', 'Medcare Hospital', 'Pending'),
+            ('Emergency Patient 1', '+254740000001', 'Westlands', 'Medcare Hospital', 'Completed'),
+            ('Emergency Patient 2', '+254740000002', 'Kilimani', 'Medcare Hospital', 'In-Transit'),
+            ('Transfer Patient', '+254740000003', 'Medcare Hospital', 'Kenyatta National Hospital', 'Dispatched'),
+            ('Emergency Patient 3', '+254740000004', 'Lavington', 'Medcare Hospital', 'Pending'),
         ]
         for pname, pphone, pickup, dropoff, status in amb_requests:
             AmbulanceRequest.objects.create(
@@ -891,9 +893,9 @@ class Command(BaseCommand):
 
         # 33. Training
         trainings = [
-            ('Patient Safety Training', 'Annual patient safety refresher', 'Dr. Kamal Rahman', 'Completed'),
-            ('CPR & First Aid', 'Basic life support training', 'Dr. Sabrina Akter', 'Completed'),
-            ('Infection Control', 'Hospital infection prevention protocols', 'Dr. Ahmed Hossain', 'Ongoing'),
+            ('Patient Safety Training', 'Annual patient safety refresher', 'Dr. Abdi Abdullahi', 'Completed'),
+            ('CPR & First Aid', 'Basic life support training', 'Dr. Kerubo Kariuki', 'Completed'),
+            ('Infection Control', 'Hospital infection prevention protocols', 'Dr. Mwangi Omondi', 'Ongoing'),
             ('New Staff Orientation', 'Orientation for new employees', 'HR Team', 'Planned'),
             ('Emergency Response Drill', 'Fire and emergency evacuation drill', 'Safety Officer', 'Planned'),
         ]
@@ -942,8 +944,8 @@ class Command(BaseCommand):
             ('Prescription Ready', 'Your prescription is ready for pickup.', 'Pharmacy'),
             ('Insurance Claim Update', 'Your insurance claim has been processed.', 'General'),
             ('Low Stock Alert', 'Medicine stock is running low, please reorder.', 'Alert'),
-            ('Payment Received', 'Payment of ৳5,000 has been received.', 'Billing'),
-            ('Appointment Confirmed', 'Your appointment with Dr. Rahman has been confirmed.', 'Appointment'),
+            ('Payment Received', 'Payment of KSh 5,000 has been received.', 'Billing'),
+            ('Appointment Confirmed', 'Your appointment with Dr. Abdullahi has been confirmed.', 'Appointment'),
         ]
         for user_p, pat in patients[:10]:
             title, msg, ntype = random.choice(notif_data)

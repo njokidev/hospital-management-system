@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 
-{% block title %}Payment {{ payment.id }} - MEDCARE{% endblock %}
+{% block title %}Payment {{ payment.id }} - {% hospital "short_name" %}{% endblock %}
 
 {% block content %}
 <div class="row">

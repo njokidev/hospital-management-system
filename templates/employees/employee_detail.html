@@ -32,13 +32,17 @@
                 <table class="table table-borderless mb-0">
                     <tr><th width="40%">Employee ID</th><td>{{ object.employee_id }}</td></tr>
                     <tr><th>Email</th><td>{{ object.user.email }}</td></tr>
-                    <tr><th>Phone</th><td>{{ object.phone }}</td></tr>
+                    <tr><th>Phone</th><td>{{ object.user.phone|ke_phone|default:"-" }}</td></tr>
                     <tr><th>Department</th><td>{{ object.department }}</td></tr>
-                    <tr><th>Joining Date</th><td>{{ object.joining_date|date:"d M Y" }}</td></tr>
-                    <tr><th>Date of Birth</th><td>{{ object.date_of_birth|date:"d M Y"|default:"-" }}</td></tr>
-                    <tr><th>Gender</th><td>{{ object.get_gender_display|default:"-" }}</td></tr>
-                    <tr><th>Blood Group</th><td>{{ object.blood_group|default:"-" }}</td></tr>
-                    <tr><th>Address</th><td>{{ object.address|default:"-" }}</td></tr>
+                    <tr><th>Designation</th><td>{{ object.designation|default:"-" }}</td></tr>
+                    <tr><th>Joining Date</th><td>{{ object.date_of_joining|date:"d/m/Y" }}</td></tr>
+                    <tr><th>Date of Birth</th><td>{{ object.user.date_of_birth|date:"d/m/Y"|default:"-" }}</td></tr>
+                    <tr><th>Gender</th><td>{{ object.user.get_gender_display|default:"-" }}</td></tr>
+                    <tr><th>Address</th><td>{{ object.user.address|default:"-" }}</td></tr>
+                    <tr><th>National ID</th><td>{{ object.national_id|default:"-" }}</td></tr>
+                    <tr><th>KRA PIN</th><td>{{ object.kra_pin|default:"-" }}</td></tr>
+                    <tr><th>NSSF / SHA</th><td>{{ object.nssf_number|default:"-" }} / {{ object.sha_number|default:"-" }}</td></tr>
+                    <tr><th>Professional Reg.</th><td>{% if object.regulatory_body %}{{ object.regulatory_body }} {{ object.license_number }}{% if object.license_expiry %}<br><small>Expires {{ object.license_expiry|date:"d/m/Y" }}</small> {% if object.license_status == 'expired' %}<span class="badge bg-danger">Expired</span>{% elif object.license_status == 'expiring' %}<span class="badge bg-warning text-dark">Renew soon</span>{% endif %}{% endif %}{% else %}-{% endif %}</td></tr>
                 </table>
             </div>
         </div>

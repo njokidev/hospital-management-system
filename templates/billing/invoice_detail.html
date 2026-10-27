@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Invoice {{ invoice.invoice_number }} - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Invoice {{ invoice.invoice_number }} - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-receipt"></i> Invoice {{ invoice.invoice_number }}</h4>
@@ -28,8 +28,8 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ item.description }}</td>
                                 <td>{{ item.quantity }}</td>
-                                <td>{{ item.unit_price|floatformat:2 }}</td>
-                                <td>{{ item.total_price|floatformat:2 }}</td>
+                                <td>{{ item.unit_price|ksh }}</td>
+                                <td>{{ item.total_price|ksh }}</td>
                             </tr>
                             {% empty %}
                             <tr><td colspan="5" class="text-center text-muted">No items.</td></tr>
@@ -39,13 +39,13 @@
                 </div>
                 <div class="text-end mt-3">
                     <table class="table table-sm w-50 ms-auto">
-                        <tr><th>Subtotal:</th><td>{{ invoice.total_amount|floatformat:2 }}</td></tr>
-                        {% if invoice.discount > 0 %}<tr><th>Discount:</th><td class="text-danger">-{{ invoice.discount|floatformat:2 }}</td></tr>{% endif %}
-                        {% if invoice.tax > 0 %}<tr><th>Tax:</th><td>{{ invoice.tax|floatformat:2 }}</td></tr>{% endif %}
-                        <tr class="table-dark"><th>Total:</th><td><strong>{{ invoice.net_amount|floatformat:2 }}</strong></td></tr>
-                        <tr class="text-success"><th>Paid:</th><td>{{ invoice.paid_amount|floatformat:2 }}</td></tr>
+                        <tr><th>Subtotal:</th><td>{{ invoice.total_amount|ksh }}</td></tr>
+                        {% if invoice.discount > 0 %}<tr><th>Discount:</th><td class="text-danger">-{{ invoice.discount|ksh }}</td></tr>{% endif %}
+                        {% if invoice.tax > 0 %}<tr><th>Tax:</th><td>{{ invoice.tax|ksh }}</td></tr>{% endif %}
+                        <tr class="table-dark"><th>Total:</th><td><strong>{{ invoice.net_amount|ksh }}</strong></td></tr>
+                        <tr class="text-success"><th>Paid:</th><td>{{ invoice.paid_amount|ksh }}</td></tr>
                         {% if invoice.due_amount > 0 %}
-                        <tr class="text-danger"><th>Due:</th><td class="fw-bold">{{ invoice.due_amount|floatformat:2 }}</td></tr>
+                        <tr class="text-danger"><th>Due:</th><td class="fw-bold">{{ invoice.due_amount|ksh }}</td></tr>
                         {% endif %}
                     </table>
                 </div>
@@ -65,8 +65,8 @@
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td><strong>{{ payment.receipt_number }}</strong></td>
-                                <td class="text-success fw-bold">{{ payment.amount|floatformat:2 }}</td>
-                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td class="text-success fw-bold">{{ payment.amount|ksh }}</td>
+                                <td>{{ payment.get_payment_method_display }}{% if payment.transaction_id %}<br><small class="text-muted font-monospace">{{ payment.transaction_id }}</small>{% endif %}</td>
                                 <td>{{ payment.created_at|date:"d-M-Y H:i" }}</td>
                                 <td><a href="{% url 'billing:payment_detail' payment.pk %}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
                             </tr>
@@ -80,6 +80,43 @@
         </div>
     </div>
     <div class="col-lg-4">
+        {% if invoice.due_amount > 0 and can_pay %}
+        <div class="card shadow-sm mb-4 border-success">
+            <div class="card-header bg-success text-white"><h6 class="mb-0"><i class="bi bi-phone"></i> Pay with M-Pesa</h6></div>
+            <div class="card-body">
+                <p class="mb-2">Balance due: <strong>{{ invoice.due_amount|ksh }}</strong></p>
+                {% if mpesa_ready %}
+                <form method="post" action="{% url 'billing:mpesa_stk_push' invoice.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label small mb-1" for="mpesa_phone">M-Pesa phone number</label>
+                        <input type="tel" class="form-control" id="mpesa_phone" name="phone" placeholder="07XX XXX XXX" value="{{ invoice.patient.user.phone }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small mb-1" for="mpesa_amount">Amount ({% currency %})</label>
+                        <input type="number" class="form-control" id="mpesa_amount" name="amount" min="1" step="1" value="{{ invoice.due_amount|floatformat:0 }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100"><i class="bi bi-send"></i> Send payment prompt</button>
+                    <p class="small text-muted mt-2 mb-0">The payer will receive a prompt on their phone to enter their M-Pesa PIN.</p>
+                </form>
+                {% else %}
+                <p class="small text-muted mb-0">M-Pesa STK Push is not configured on this server. Record M-Pesa payments manually with the transaction code from the confirmation SMS.</p>
+                {% endif %}
+                {% if mpesa_transactions %}
+                <hr>
+                <h6 class="small text-uppercase text-muted">Recent M-Pesa requests</h6>
+                <ul class="list-unstyled small mb-0">
+                    {% for t in mpesa_transactions %}
+                    <li class="d-flex justify-content-between py-1 border-bottom" {% if t.status == 'Pending' %}data-mpesa-poll="{% url 'billing:mpesa_status' t.pk %}"{% endif %}>
+                        <span>{{ t.created_at|date:"d/m H:i" }} · {{ t.phone }} · {{ t.amount|ksh:0 }}</span>
+                        <span class="mpesa-status badge {% if t.status == 'Success' %}bg-success{% elif t.status == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{% if t.mpesa_receipt_number %}{{ t.mpesa_receipt_number }}{% else %}{{ t.get_status_display }}{% endif %}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
         <div class="card shadow-sm mb-4">
             <div class="card-header"><h6 class="mb-0">Invoice Info</h6></div>
             <div class="card-body">
@@ -100,4 +137,23 @@
         <a href="{% url 'billing:add_item' invoice.pk %}" class="btn btn-outline-primary w-100"><i class="bi bi-plus-lg"></i> Add Item</a>
     </div>
 </div>
+<script>
+(function () {
+    // Poll pending M-Pesa requests; reload once the customer has responded.
+    var rows = document.querySelectorAll('[data-mpesa-poll]');
+    if (!rows.length) return;
+    var tries = 0;
+    var timer = setInterval(function () {
+        tries += 1;
+        rows.forEach(function (row) {
+            fetch(row.dataset.mpesaPoll, {credentials: 'same-origin'})
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.status && d.status !== 'Pending') { clearInterval(timer); window.location.reload(); }
+                }).catch(function () {});
+        });
+        if (tries >= 24) clearInterval(timer);   // stop after ~2 minutes
+    }, 5000);
+})();
+</script>
 {% endblock %}

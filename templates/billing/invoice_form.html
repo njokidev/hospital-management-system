@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Edit Invoice{% else %}Create Invoice{% endif %} - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit Invoice{% else %}Create Invoice{% endif %} - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-10">
@@ -30,7 +30,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Discount (৳)</label>
+                            <label class="form-label">Discount ({% currency %})</label>
                             {{ form.discount }}
                         </div>
                         <div class="col-md-6 mb-3">
@@ -46,8 +46,8 @@
                                 <tr>
                                     <th style="width:35%">Description</th>
                                     <th>Quantity</th>
-                                    <th>Unit Price (৳)</th>
-                                    <th>Total (৳)</th>
+                                    <th>Unit Price ({% currency %})</th>
+                                    <th>Total ({% currency %})</th>
                                     <th style="width:50px"></th>
                                 </tr>
                             </thead>

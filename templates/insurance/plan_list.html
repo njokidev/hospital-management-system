@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Insurance Plans - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Insurance Plans - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-clipboard2-data"></i> Insurance Plans</h4>
@@ -10,7 +10,7 @@
         <div class="table-responsive">
             <table class="table table-hover datatable">
                 <thead class="table-dark">
-                    <tr><th>#</th><th>Plan Name</th><th>Provider</th><th>Coverage</th><th>Premium (৳)</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th>#</th><th>Plan Name</th><th>Provider</th><th>Coverage</th><th>Premium ({% currency %})</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     {% for plan in plans %}
@@ -19,9 +19,9 @@
                         <td><strong>{{ plan.name }}</strong></td>
                         <td>{{ plan.provider.name }}</td>
                         <td>{{ plan.coverage_percentage|default:"-" }}%</td>
-                        <td>{{ plan.premium|floatformat:2 }}</td>
+                        <td>{{ plan.premium|floatformat:"2g" }}</td>
                         <td>{% if plan.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</td>
-                        <td><div class="btn-group btn-group-sm"><a href="{% url 'insurance:plan_update' plan.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i></a><a href="{% url 'insurance:plan_delete' plan.pk %}" class="btn btn-outline-danger" onclick="return confirm('Delete?')"><i class="bi bi-trash"></i></a></div></td>
+                        <td><div class="btn-group btn-group-sm"><a href="{% url 'insurance:plan_update' plan.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i></a></div></td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="7" class="text-center py-4"><i class="bi bi-clipboard2-data text-muted" style="font-size:2rem;"></i><p class="mt-2 text-muted">No insurance plans.</p></td></tr>

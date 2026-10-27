@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Due Invoices - MEDCARE HOSPITAL & DIAGNOSTIC CENTER{% endblock %}
+{% block title %}Due Invoices - {% hospital "name" %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="bi bi-exclamation-circle text-danger"></i> Due Invoices</h4>
@@ -11,7 +11,7 @@
         <div class="card bg-danger text-white shadow"><div class="card-body text-center"><h3>{{ total_due_count }}</h3><p class="mb-0">Total Due Invoices</p></div></div>
     </div>
     <div class="col-md-4">
-        <div class="card bg-warning text-dark shadow"><div class="card-body text-center"><h3>৳{{ total_due_amount|floatformat:2 }}</h3><p class="mb-0">Total Due Amount</p></div></div>
+        <div class="card bg-warning text-dark shadow"><div class="card-body text-center"><h3>{{ total_due_amount|ksh:2 }}</h3><p class="mb-0">Total Due Amount</p></div></div>
     </div>
     <div class="col-md-4">
         <div class="card bg-info text-white shadow"><div class="card-body text-center"><h3>{{ overdue_count }}</h3><p class="mb-0">Overdue (>30 days)</p></div></div>
@@ -27,9 +27,9 @@
                         <th>#</th>
                         <th>Invoice #</th>
                         <th>Patient</th>
-                        <th>Total (৳)</th>
-                        <th>Paid (৳)</th>
-                        <th>Due (৳)</th>
+                        <th>Total ({% currency %})</th>
+                        <th>Paid ({% currency %})</th>
+                        <th>Due ({% currency %})</th>
                         <th>Date</th>
                         <th>Days Pending</th>
                         <th>Action</th>
@@ -41,9 +41,9 @@
                         <td>{{ forloop.counter }}</td>
                         <td><strong>{{ inv.invoice_number }}</strong></td>
                         <td>{{ inv.patient.full_name|default:inv.patient }}</td>
-                        <td>{{ inv.total_amount|floatformat:2 }}</td>
-                        <td class="text-success">{{ inv.paid_amount|floatformat:2 }}</td>
-                        <td class="text-danger fw-bold">{{ inv.due_amount|floatformat:2 }}</td>
+                        <td>{{ inv.total_amount|floatformat:"2g" }}</td>
+                        <td class="text-success">{{ inv.paid_amount|floatformat:"2g" }}</td>
+                        <td class="text-danger fw-bold">{{ inv.due_amount|floatformat:"2g" }}</td>
                         <td>{{ inv.created_at|date:"d-M-Y" }}</td>
                         <td>
                             {% if inv.days_pending > 30 %}

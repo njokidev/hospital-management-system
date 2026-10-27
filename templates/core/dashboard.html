@@ -54,7 +54,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted mb-1">Monthly Revenue</p>
-                        <h3 class="mb-0">৳{{ month_revenue|default:"0" }}</h3>
+                        <h3 class="mb-0">{{ month_revenue|ksh:0 }}</h3>
                     </div>
                     <div class="stat-icon bg-warning bg-opacity-10 text-warning">
                         <i class="bi bi-currency-dollar"></i>
@@ -69,7 +69,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted mb-1">Pending Payments</p>
-                        <h3 class="mb-0">৳{{ pending_payments|default:"0" }}</h3>
+                        <h3 class="mb-0">{{ pending_payments|ksh:0 }}</h3>
                     </div>
                     <div class="stat-icon bg-danger bg-opacity-10 text-danger">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -322,7 +322,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted mb-1">Total Paid</p>
-                        <h3 class="mb-0">৳{{ total_paid|default:"0" }}</h3>
+                        <h3 class="mb-0">{{ total_paid|ksh:0 }}</h3>
                     </div>
                     <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-check-circle"></i></div>
                 </div>
@@ -625,7 +625,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted mb-1">Monthly Revenue</p>
-                        <h3 class="mb-0">৳{{ month_revenue|default:"0" }}</h3>
+                        <h3 class="mb-0">{{ month_revenue|ksh:0 }}</h3>
                     </div>
                     <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-currency-dollar"></i></div>
                 </div>
@@ -651,7 +651,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted mb-1">Pending Amount</p>
-                        <h3 class="mb-0">৳{{ total_pending_amount|default:"0" }}</h3>
+                        <h3 class="mb-0">{{ total_pending_amount|ksh:0 }}</h3>
                     </div>
                     <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle"></i></div>
                 </div>

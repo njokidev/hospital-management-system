@@ -34,10 +34,10 @@
                 <table class="table table-borderless mb-0">
                     <tr><th width="45%">Department</th><td>{{ object.department }}</td></tr>
                     <tr><th>Specialization</th><td>{{ object.specialization }}</td></tr>
-                    <tr><th>Consultation Fee</th><td>৳{{ object.consultation_fee }}</td></tr>
-                    <tr><th>Experience</th><td>{{ object.experience_years }} years</td></tr>
+                    <tr><th>Consultation Fee</th><td>{{ object.consultation_fee|ksh }}</td></tr>
+                    <tr><th>Experience</th><td>{{ object.years_of_experience }} years</td></tr>
                     <tr><th>Qualification</th><td>{{ object.qualification|default:"-" }}</td></tr>
-                    <tr><th>License No.</th><td>{{ object.license_number|default:"-" }}</td></tr>
+                    <tr><th>KMPDC Reg. No.</th><td>{{ object.kmpdc_number|default:"-" }}</td></tr>
                 </table>
             </div>
         </div>
@@ -47,7 +47,7 @@
             <div class="card-body">
                 <table class="table table-borderless mb-0">
                     <tr><th width="45%">Email</th><td>{{ object.user.email }}</td></tr>
-                    <tr><th>Phone</th><td>{{ object.phone|default:"-" }}</td></tr>
+                    <tr><th>Phone</th><td>{{ object.user.phone|ke_phone|default:"-" }}</td></tr>
                 </table>
             </div>
         </div>
@@ -65,7 +65,7 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Weekly Schedule</h6>
-                        <a href="{% url 'doctors:schedule_manage' object.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil me-1"></i>Manage Schedule</a>
+                        <a href="{% url 'doctors:schedule_list' %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil me-1"></i>Manage Schedule</a>
                     </div>
                     <div class="card-body">
                         <table class="table table-bordered">

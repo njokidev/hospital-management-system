@@ -33,6 +33,11 @@ class Doctor(models.Model):
     def department(self):
         return self.employee.department
 
+    @property
+    def kmpdc_number(self):
+        """KMPDC registration number (stored on the linked Employee)."""
+        return self.employee.license_number
+
 
 class DoctorSchedule(models.Model):
     DAY_CHOICES = [

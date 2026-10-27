@@ -1,12 +1,12 @@
 {% extends "base/base.html" %}
 
-{% block title %}Print Invoice {{ invoice.invoice_number }} - MEDCARE{% endblock %}
+{% block title %}Print Invoice {{ invoice.invoice_number }} - {% hospital "short_name" %}{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="text-center mb-4">
-        <h3>MEDCARE HOSPITAL & DIAGNOSTIC CENTER</h3>
-        <p>Dhaka, Bangladesh | Phone: +880-1700-000000</p>
+        <h3>{% hospital "name" %}</h3>
+        <p>{% hospital "address" %} | Phone: {% hospital "phone" %}</p>
     </div>
 
     <div class="row mb-3">

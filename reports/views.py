@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import Sum, Count, Q, F
 from django.db.models.functions import TruncDate, TruncMonth
+from django.conf import settings
 from django.utils import timezone
 from .forms import ReportFilterForm
 
@@ -437,11 +438,11 @@ def export_revenue_pdf_view(request):
         .summary {{ margin: 20px 0; padding: 10px; background: #f9f9f9; border-radius: 5px; }}
     </style></head>
     <body>
-        <h1>Revenue Report</h1>
+        <h1>{settings.HOSPITAL_NAME}</h1><h2 style="text-align:center">Revenue Report ({settings.CURRENCY_CODE})</h2>
         <div class="summary">
-            <p><strong>Total Revenue:</strong> ${total_revenue:,.2f}</p>
-            <p><strong>Paid Amount:</strong> ${paid_amount:,.2f}</p>
-            <p><strong>Due Amount:</strong> ${due_amount:,.2f}</p>
+            <p><strong>Total Revenue:</strong> {settings.CURRENCY_SYMBOL} {total_revenue:,.2f}</p>
+            <p><strong>Paid Amount:</strong> {settings.CURRENCY_SYMBOL} {paid_amount:,.2f}</p>
+            <p><strong>Due Amount:</strong> {settings.CURRENCY_SYMBOL} {due_amount:,.2f}</p>
         </div>
         <table>
             <tr><th>Invoice #</th><th>Patient</th><th>Net Amount</th><th>Paid</th><th>Due</th><th>Status</th></tr>
@@ -451,9 +452,9 @@ def export_revenue_pdf_view(request):
             <tr>
                 <td>{inv.invoice_number}</td>
                 <td>{inv.patient}</td>
-                <td>${inv.net_amount:,.2f}</td>
-                <td>${inv.paid_amount:,.2f}</td>
-                <td>${inv.due_amount:,.2f}</td>
+                <td>{settings.CURRENCY_SYMBOL} {inv.net_amount:,.2f}</td>
+                <td>{settings.CURRENCY_SYMBOL} {inv.paid_amount:,.2f}</td>
+                <td>{settings.CURRENCY_SYMBOL} {inv.due_amount:,.2f}</td>
                 <td>{inv.status}</td>
             </tr>
         """

@@ -3,6 +3,8 @@ from decimal import Decimal
 from datetime import timedelta, date, time
 
 from django.core.management.base import BaseCommand
+
+from core import seed_kenya as ke
 from django.utils import timezone
 from django.db import transaction
 
@@ -21,25 +23,25 @@ from insurance.models import InsuranceProvider, InsurancePlan
 
 # ─── Name Data ───────────────────────────────────────────────────────────────
 
-BENGALI_FIRST_NAMES_MALE = [
-    'Rahim', 'Kamal', 'Jamal', 'Karim', 'Naim', 'Tanim', 'Sakib', 'Tamim',
-    'Rayhan', 'Sohan', 'Rubel', 'Monir', 'Helal', 'Badal', 'Jalal', 'Faruk',
-    'Amin', 'Rafiq', 'Masum', 'Shakil', 'Mizan', 'Anis', 'Babul', 'Delwar',
-    'Enam', 'Faruq', 'Golam', 'Habib', 'Iqbal', 'Jahangir', 'Khalid', 'Liton',
+KENYAN_FIRST_NAMES_MALE = [
+    'Gitonga', 'Abdi', 'Wekesa', 'Juma', 'Kioko', 'Patrick', 'Omar', 'George',
+    'Simiyu', 'Hamisi', 'Makokha', 'Mutiso', 'Otieno', 'Samuel', 'Mwangi', 'Daniel',
+    'Brian', 'Muli', 'Ouma', 'Bakari', 'Okoth', 'Kevin', 'Felix', 'James',
+    'John', 'Joseph', 'Kiprop', 'Kibet', 'Mutua', 'Kamau', 'Kipchoge', 'Kiptoo',
 ]
 
-BENGALI_FIRST_NAMES_FEMALE = [
-    'Fatema', 'Rashida', 'Nasrin', 'Tahsin', 'Maliha', 'Sumaiya', 'Joya',
-    'Purnima', 'Shirin', 'Ananya', 'Farzana', 'Gulshan', 'Halima', 'Ishrat',
-    'Jesmin', 'Khaleda', 'Laili', 'Momtaz', 'Nargis', 'Orchid', 'Poly',
-    'Roksana', 'Sabrina', 'Taslima', 'Umme', 'Varsha', 'Yasmin', 'Zara',
+KENYAN_FIRST_NAMES_FEMALE = [
+    'Jepkosgei', 'Wangari', 'Amina', 'Eric', 'Esther', 'Anyango', 'Mumbua',
+    'Nyokabi', 'Adhiambo', 'Njeri', 'Chebet', 'Nafula', 'Wambui',
+    'Muthoni', 'Mercy', 'Grace', 'Joy', 'Lilian', 'Neema', 'Wairimu',
+    'Moraa', 'Kerubo', 'Chepkoech', 'Makena', 'Kagendo', 'Mwende', 'Ndanu',
 ]
 
-BENGALI_LAST_NAMES = [
-    'Rahman', 'Hossain', 'Islam', 'Khan', 'Chowdhury', 'Mahmud', 'Ali',
-    'Sarker', 'Bhuiyan', 'Uddin', 'Miah', 'Sheikh', 'Das', 'Biswas',
-    'Mondal', 'Akter', 'Begum', 'Haque', 'Choudhury', 'Talukder',
-    'Reza', 'Mazumder', 'Paul', 'Ghosh', 'Dey', 'Banerjee', 'Sen',
+KENYAN_LAST_NAMES = [
+    'Abdullahi', 'Omondi', 'Kimani', 'Ndungu', 'Kiprotich', 'Kiplagat', 'Ali',
+    'Maina', 'Ochieng', 'Keter', 'Kirui', 'Macharia', 'Koech', 'Mutua',
+    'Ruto', 'Kariuki', 'Odhiambo', 'Wekesa', 'Musyoka', 'Gathoni',
+    'Wambua', 'Langat', 'Paul', 'Cheruiyot', 'Rotich', 'Otieno', 'Njenga',
 ]
 
 ENGLISH_FIRST_NAMES_MALE = [
@@ -198,13 +200,13 @@ class Command(BaseCommand):
         if not User.objects.filter(username='admin').exists():
             admin = User.objects.create_superuser(
                 username='admin',
-                email='admin@medcare.com',
+                email='admin@medcare.co.ke',
                 password='admin123',
                 first_name='System',
                 last_name='Administrator',
-                phone='+8801712345678',
+                phone='+254712345678',
                 gender='Male',
-                address='MEDCARE Hospital, Dhaka, Bangladesh',
+                address='MEDCARE Hospital, Nairobi, Kenya',
             )
         else:
             admin = User.objects.get(username='admin')
@@ -220,13 +222,13 @@ class Command(BaseCommand):
         if not User.objects.filter(username='hospitaladmin').exists():
             ha = User.objects.create_user(
                 username='hospitaladmin',
-                email='hospitaladmin@medcare.com',
+                email='hospitaladmin@medcare.co.ke',
                 password='admin123',
                 first_name='Hospital',
                 last_name='Administrator',
-                phone='+8801712345679',
+                phone='+254712345679',
                 gender='Male',
-                address='MEDCARE Hospital, Dhaka, Bangladesh',
+                address='MEDCARE Hospital, Nairobi, Kenya',
             )
         else:
             ha = User.objects.get(username='hospitaladmin')
@@ -241,10 +243,10 @@ class Command(BaseCommand):
         self.stdout.write('Creating branch...')
 
         branch, _ = Branch.objects.get_or_create(
-            name='Dhaka Main Branch',
+            name='Nairobi Main Branch',
             defaults={
-                'address': '123 Medical Avenue, Mirpur-10, Dhaka-1216, Bangladesh',
-                'phone': '+8802-87123456',
+                'address': '123 Medical Avenue, Kasarani, Nairobi, Kenya',
+                'phone': '+254787123456',
                 'is_main_branch': True,
                 'is_active': True,
             },
@@ -277,8 +279,8 @@ class Command(BaseCommand):
                 branch=self.branch,
                 defaults={
                     'description': desc,
-                    'phone': f'+8802-87{random.randint(100000, 999999)}',
-                    'email': f'{name.lower().replace(" ", "")}@medcare.com',
+                    'phone': ke.landline(),
+                    'email': f'{name.lower().replace(" ", "")}@medcare.co.ke',
                     'is_active': True,
                 },
             )
@@ -339,46 +341,46 @@ class Command(BaseCommand):
             self.med_categories[name] = cat
 
         suppliers_data = [
-            ('Square Pharmaceuticals Ltd.', 'Mr. Ahmed', '+8801711111111', 'square@pharma.com'),
-            ('Beximco Pharmaceuticals Ltd.', 'Mr. Rashid', '+8801722222222', 'beximco@pharma.com'),
-            ('Incepta Pharmaceuticals Ltd.', 'Mr. Kabir', '+8801733333333', 'incepta@pharma.com'),
-            ('Renata Limited', 'Mr. Hasan', '+8801744444444', 'renata@pharma.com'),
-            ('Opsonin Pharma Limited', 'Mr. Alam', '+8801755555555', 'opsonin@pharma.com'),
+            ('Cosmos Ltd', 'Mwangi', '+254711111111', 'sales@supplier.example.com'),
+            ('Dawa Life Sciences', 'Rashid', '+254722222222', 'sales@supplier.example.com'),
+            ('Universal Corporation Ltd', 'Muriuki', '+254733333333', 'sales@supplier.example.com'),
+            ('Regal Pharmaceuticals', 'Barasa', '+254744444444', 'sales@supplier.example.com'),
+            ('Beta Healthcare', 'Wanjala', '+254755555555', 'sales@supplier.example.com'),
         ]
         suppliers = []
         for name, contact, phone, email in suppliers_data:
             sup, _ = Supplier.objects.get_or_create(
                 name=name,
-                defaults={'contact_person': contact, 'phone': phone, 'email': email, 'address': 'Dhaka, Bangladesh'},
+                defaults={'contact_person': contact, 'phone': phone, 'email': email, 'address': 'Nairobi, Kenya'},
             )
             suppliers.append(sup)
 
         medicines_data = [
-            ('Napa 500mg', 'Paracetamol', 'Tablet', 'Analgesics', 'Square', 1.50, 500),
-            ('Napa Extra', 'Paracetamol+ caffeine', 'Tablet', 'Analgesics', 'Square', 3.00, 300),
-            ('Alamast 10mg', 'Levocetirizine', 'Tablet', 'Antihistamines', 'Square', 5.00, 200),
-            ('Azithromycin 500mg', 'Azithromycin', 'Tablet', 'Antibiotics', 'Beximco', 12.00, 150),
-            ('Amoxicillin 500mg', 'Amoxicillin', 'Capsule', 'Antibiotics', 'Square', 8.00, 250),
-            ('Metformin 500mg', 'Metformin', 'Tablet', 'Antidiabetics', 'Beximco', 4.00, 400),
-            ('Amlodipine 5mg', 'Amlodipine', 'Tablet', 'Cardiovascular', 'Incepta', 6.00, 300),
-            ('Atorvastatin 20mg', 'Atorvastatin', 'Tablet', 'Cardiovascular', 'Renata', 10.00, 200),
-            ('Omeprazole 20mg', 'Omeprazole', 'Capsule', 'Gastrointestinal', 'Square', 7.00, 350),
-            ('Pantoprazole 40mg', 'Pantoprazole', 'Tablet', 'Gastrointestinal', 'Incepta', 8.00, 250),
-            ('Salbutamol Inhaler', 'Salbutamol', 'Inhaler', 'Respiratory', 'Beximco', 150.00, 100),
-            ('Montelukast 10mg', 'Montelukast', 'Tablet', 'Respiratory', 'Renata', 9.00, 200),
+            ('Panadol 500mg', 'Paracetamol', 'Tablet', 'Analgesics', 'Cosmos', 1.50, 500),
+            ('Panadol Extra', 'Paracetamol+ caffeine', 'Tablet', 'Analgesics', 'Cosmos', 3.00, 300),
+            ('Levocetirizine 5mg', 'Levocetirizine', 'Tablet', 'Antihistamines', 'Cosmos', 5.00, 200),
+            ('Azithromycin 500mg', 'Azithromycin', 'Tablet', 'Antibiotics', 'Dawa', 12.00, 150),
+            ('Amoxicillin 500mg', 'Amoxicillin', 'Capsule', 'Antibiotics', 'Cosmos', 8.00, 250),
+            ('Metformin 500mg', 'Metformin', 'Tablet', 'Antidiabetics', 'Dawa', 4.00, 400),
+            ('Amlodipine 5mg', 'Amlodipine', 'Tablet', 'Cardiovascular', 'Universal Corp', 6.00, 300),
+            ('Atorvastatin 20mg', 'Atorvastatin', 'Tablet', 'Cardiovascular', 'Regal', 10.00, 200),
+            ('Omeprazole 20mg', 'Omeprazole', 'Capsule', 'Gastrointestinal', 'Cosmos', 7.00, 350),
+            ('Pantoprazole 40mg', 'Pantoprazole', 'Tablet', 'Gastrointestinal', 'Universal Corp', 8.00, 250),
+            ('Salbutamol Inhaler', 'Salbutamol', 'Inhaler', 'Respiratory', 'Dawa', 150.00, 100),
+            ('Montelukast 10mg', 'Montelukast', 'Tablet', 'Respiratory', 'Regal', 9.00, 200),
             ('Betnovate Cream', 'Betamethasone', 'Ointment', 'Dermatological', 'GSK', 25.00, 150),
-            ('Fusidic Cream', 'Fusidic Acid', 'Ointment', 'Dermatological', 'Square', 30.00, 120),
+            ('Fusidic Cream', 'Fusidic Acid', 'Ointment', 'Dermatological', 'Cosmos', 30.00, 120),
             ('Calpol 500mg', 'Paracetamol', 'Syrup', 'Analgesics', 'GSK', 35.00, 200),
-            ('Vitamin C 500mg', 'Ascorbic Acid', 'Tablet', 'Vitamins & Supplements', 'Renata', 2.00, 500),
-            ('Ostocal D3', 'Calcium+Vitamin D3', 'Tablet', 'Vitamins & Supplements', 'Incepta', 5.00, 400),
-            ('Thyrox 50mcg', 'Levothyroxine', 'Tablet', 'Hormones', 'Square', 15.00, 200),
-            ('Diazepam 5mg', 'Diazepam', 'Tablet', 'Analgesics', 'Beximco', 4.50, 100),
-            ('Cetirizine 10mg', 'Cetirizine', 'Tablet', 'Antihistamines', 'Renata', 3.50, 300),
-            ('Dolo 650mg', 'Paracetamol', 'Tablet', 'Analgesics', 'Micro Labs', 2.00, 450),
+            ('Vitamin C 500mg', 'Ascorbic Acid', 'Tablet', 'Vitamins & Supplements', 'Regal', 2.00, 500),
+            ('Calcium + Vitamin D3', 'Calcium+Vitamin D3', 'Tablet', 'Vitamins & Supplements', 'Universal Corp', 5.00, 400),
+            ('Eltroxin 50mcg', 'Levothyroxine', 'Tablet', 'Hormones', 'Cosmos', 15.00, 200),
+            ('Diazepam 5mg', 'Diazepam', 'Tablet', 'Analgesics', 'Dawa', 4.50, 100),
+            ('Cetirizine 10mg', 'Cetirizine', 'Tablet', 'Antihistamines', 'Regal', 3.50, 300),
+            ('Paracetamol 650mg', 'Paracetamol', 'Tablet', 'Analgesics', 'Micro Labs', 2.00, 450),
             ('Augmentin 625mg', 'Amoxicillin+Clavulanate', 'Tablet', 'Antibiotics', 'GSK', 20.00, 180),
             ('Panadol CF', 'Paracetamol+Phenylephrine', 'Tablet', 'Analgesics', 'GSK', 6.00, 250),
             ('Rizact 10mg', 'Rizatriptan', 'Tablet', 'Analgesics', 'Sun Pharma', 25.00, 80),
-            ('Seclo 20mg', 'Omeprazole', 'Capsule', 'Gastrointestinal', 'Square', 6.50, 300),
+            ('Losec 20mg', 'Omeprazole', 'Capsule', 'Gastrointestinal', 'Cosmos', 6.50, 300),
         ]
 
         today = timezone.now().date()
@@ -416,24 +418,24 @@ class Command(BaseCommand):
     def _create_insurance_data(self):
         self.stdout.write('Creating insurance providers and plans...')
         providers_data = [
-            ('Prime Insurance Ltd.', 'Mr. Rahman', '+8801812345678', 'prime@insurance.com'),
-            ('Green Delta Insurance Co.', 'Ms. Sultana', '+8801823456789', 'greendelta@insurance.com'),
-            ('Reliance Insurance Ltd.', 'Mr. Chowdhury', '+8801834567890', 'reliance@insurance.com'),
-            ('Eastern Insurance Co.', 'Mr. Bhuiyan', '+8801845678901', 'eastern@insurance.com'),
+            ('AAR Insurance Kenya', 'Abdullahi', '+254712345678', 'claims@insurer.example.com'),
+            ('Jubilee Health Insurance', 'Kinyua', '+254723456789', 'claims@insurer.example.com'),
+            ('Britam', 'Kiprotich', '+254734567890', 'claims@insurer.example.com'),
+            ('CIC Insurance Group', 'Ochieng', '+254745678901', 'claims@insurer.example.com'),
         ]
         self.insurance_providers = []
         for name, contact, phone, email in providers_data:
             prov, _ = InsuranceProvider.objects.get_or_create(
                 name=name,
-                defaults={'contact_person': contact, 'phone': phone, 'email': email, 'address': 'Dhaka, Bangladesh'},
+                defaults={'contact_person': contact, 'phone': phone, 'email': email, 'address': 'Nairobi, Kenya'},
             )
             self.insurance_providers.append(prov)
 
         plans_data = [
             ('Prime Basic', 50, 50000, 'Basic health coverage'),
             ('Prime Premium', 75, 200000, 'Premium health coverage with higher limits'),
-            ('Green Delta Gold', 80, 300000, 'Gold tier comprehensive coverage'),
-            ('Green Delta Silver', 60, 100000, 'Silver tier coverage'),
+            ('Jubilee Gold', 80, 300000, 'Gold tier comprehensive coverage'),
+            ('Jubilee Silver', 60, 100000, 'Silver tier coverage'),
             ('Reliance Family', 70, 150000, 'Family floater plan'),
             ('Reliance Individual', 65, 100000, 'Individual health plan'),
             ('Eastern Essential', 55, 75000, 'Essential health coverage'),
@@ -467,8 +469,8 @@ class Command(BaseCommand):
         spec_names = list(self.specializations.keys())
         dept_list = list(self.departments.values())
 
-        first_names_m = BENGALI_FIRST_NAMES_MALE[:6] + ENGLISH_FIRST_NAMES_MALE[:4]
-        last_names = BENGALI_LAST_NAMES[:10]
+        first_names_m = KENYAN_FIRST_NAMES_MALE[:6] + ENGLISH_FIRST_NAMES_MALE[:4]
+        last_names = KENYAN_LAST_NAMES[:10]
 
         self.doctor_users = []
         self.doctor_objects = []
@@ -476,7 +478,7 @@ class Command(BaseCommand):
             first = first_names_m[i]
             last = last_names[i]
             username = f'dr.{first.lower()}.{last.lower()}'
-            email = f'{username}@medcare.com'
+            email = f'{username}@medcare.co.ke'
 
             user, created = User.objects.get_or_create(
                 username=username,
@@ -484,10 +486,10 @@ class Command(BaseCommand):
                     'email': email,
                     'first_name': first,
                     'last_name': last,
-                    'phone': f'+88017{random.randint(10000000, 99999999)}',
+                    'phone': ke.phone(),
                     'gender': 'Male',
                     'date_of_birth': date(random.randint(1965, 1990), random.randint(1, 12), random.randint(1, 28)),
-                    'address': f'{random.randint(1, 200)}, {random.choice(["Mirpur", "Dhanmondi", "Gulshan", "Banani", "Uttara", "Mohammadpur"])}, Dhaka',
+                    'address': f'{random.randint(1, 200)}, {random.choice(["Kasarani", "Lavington", "Westlands", "Kilimani", "Karen", "South B"])}, Nairobi',
                 },
             )
             if created:
@@ -506,8 +508,8 @@ class Command(BaseCommand):
                     'designation': 'Senior Consultant',
                     'date_of_joining': date(random.randint(2015, 2023), random.randint(1, 12), 1),
                     'salary': random.choice([80000, 90000, 100000, 120000, 150000]),
-                    'emergency_contact': f'{random.choice(BENGALI_FIRST_NAMES_MALE)} {last}',
-                    'emergency_phone': f'+88018{random.randint(10000000, 99999999)}',
+                    'emergency_contact': f'{random.choice(KENYAN_FIRST_NAMES_MALE)} {last}',
+                    'emergency_phone': ke.phone(),
                     'is_active': True,
                 },
             )
@@ -561,13 +563,13 @@ class Command(BaseCommand):
             for i in range(count):
                 is_female = role_name in ['Nurse'] and random.random() > 0.3
                 if is_female:
-                    first = random.choice(BENGALI_FIRST_NAMES_FEMALE + ENGLISH_FIRST_NAMES_FEMALE)
+                    first = random.choice(KENYAN_FIRST_NAMES_FEMALE + ENGLISH_FIRST_NAMES_FEMALE)
                 else:
-                    first = random.choice(BENGALI_FIRST_NAMES_MALE + ENGLISH_FIRST_NAMES_MALE)
-                last = random.choice(BENGALI_LAST_NAMES)
+                    first = random.choice(KENYAN_FIRST_NAMES_MALE + ENGLISH_FIRST_NAMES_MALE)
+                last = random.choice(KENYAN_LAST_NAMES)
 
                 uname = f'{first.lower()}.{last.lower()}.{role_name.lower().replace(" ", "")}{i+1}'
-                email = f'{uname}@medcare.com'
+                email = f'{uname}@medcare.co.ke'
 
                 user, created = User.objects.get_or_create(
                     username=uname,
@@ -575,10 +577,10 @@ class Command(BaseCommand):
                         'email': email,
                         'first_name': first,
                         'last_name': last,
-                        'phone': f'+88017{random.randint(10000000, 99999999)}',
+                        'phone': ke.phone(),
                         'gender': 'Female' if is_female else 'Male',
                         'date_of_birth': date(random.randint(1985, 2000), random.randint(1, 12), random.randint(1, 28)),
-                        'address': f'{random.randint(1, 200)}, {random.choice(["Mirpur", "Dhanmondi", "Gulshan", "Uttara"])}, Dhaka',
+                        'address': f'{random.randint(1, 200)}, {random.choice(["Kasarani", "Lavington", "Westlands", "Karen"])}, Nairobi',
                     },
                 )
                 if created:
@@ -596,8 +598,8 @@ class Command(BaseCommand):
                         'designation': designation,
                         'date_of_joining': date(random.randint(2018, 2024), random.randint(1, 12), 1),
                         'salary': random.choice(salaries),
-                        'emergency_contact': f'{random.choice(BENGALI_FIRST_NAMES_MALE)} {last}',
-                        'emergency_phone': f'+88018{random.randint(10000000, 99999999)}',
+                        'emergency_contact': f'{random.choice(KENYAN_FIRST_NAMES_MALE)} {last}',
+                        'emergency_phone': ke.phone(),
                         'is_active': True,
                     },
                 )
@@ -617,10 +619,10 @@ class Command(BaseCommand):
         for i in range(50):
             is_female = random.random() > 0.45
             if is_female:
-                first = random.choice(BENGALI_FIRST_NAMES_FEMALE + ENGLISH_FIRST_NAMES_FEMALE)
+                first = random.choice(KENYAN_FIRST_NAMES_FEMALE + ENGLISH_FIRST_NAMES_FEMALE)
             else:
-                first = random.choice(BENGALI_FIRST_NAMES_MALE + ENGLISH_FIRST_NAMES_MALE)
-            last = random.choice(BENGALI_LAST_NAMES)
+                first = random.choice(KENYAN_FIRST_NAMES_MALE + ENGLISH_FIRST_NAMES_MALE)
+            last = random.choice(KENYAN_LAST_NAMES)
 
             uname = f'{first.lower()}.{last.lower()}.p{i+1}'
             email = f'{uname}@email.com'
@@ -631,10 +633,10 @@ class Command(BaseCommand):
                     'email': email,
                     'first_name': first,
                     'last_name': last,
-                    'phone': f'+8801{random.randint(300000000, 999999999)}',
+                    'phone': ke.phone(),
                     'gender': 'Female' if is_female else 'Male',
                     'date_of_birth': date(random.randint(1950, 2015), random.randint(1, 12), random.randint(1, 28)),
-                    'address': f'{random.randint(1, 500)}, {random.choice(["Mirpur", "Dhanmondi", "Gulshan", "Banani", "Uttara", "Mohammadpur", "Tejgaon", "Farmgate", "Shahbagh", "Motijheel"])}, Dhaka-{random.randint(1000, 2199)}',
+                    'address': f'{random.randint(1, 500)}, {random.choice(["Kasarani", "Lavington", "Westlands", "Kilimani", "Karen", "South B", "Industrial Area", "Ngara", "Parklands", "CBD"])}, Nairobi',
                 },
             )
             if created:
@@ -653,8 +655,8 @@ class Command(BaseCommand):
                     'blood_group': random.choice(blood_groups),
                     'allergies': random.choice(ALLERGIES),
                     'medical_history': random.choice(MEDICAL_HISTORIES),
-                    'emergency_contact_name': f'{random.choice(BENGALI_FIRST_NAMES_MALE)} {last}',
-                    'emergency_contact_phone': f'+8801{random.randint(300000000, 999999999)}',
+                    'emergency_contact_name': f'{random.choice(KENYAN_FIRST_NAMES_MALE)} {last}',
+                    'emergency_contact_phone': ke.phone(),
                     'insurance_provider': plan,
                 },
             )
@@ -889,7 +891,7 @@ class Command(BaseCommand):
             accountant = self.staff_users[0] if self.staff_users else self.doctor_users[0]
 
         today = timezone.now().date()
-        payment_methods = ['Cash', 'Card', 'Bank Transfer', 'Mobile Banking', 'Insurance']
+        payment_methods = ke.PAYMENT_METHODS
 
         self.invoice_objects = []
         total_payments = 0
@@ -962,8 +964,7 @@ class Command(BaseCommand):
                     invoice=invoice,
                     amount=paid_amount,
                     defaults={
-                        'payment_method': random.choice(payment_methods),
-                        'transaction_id': f'TXN-{random.randint(100000, 999999)}',
+                        **ke.payment(payment_methods),
                         'received_by': accountant,
                         'notes': '',
                     },
